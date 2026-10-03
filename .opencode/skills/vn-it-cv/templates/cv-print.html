@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CV — [FULL NAME]</title>
+<!--
+  Cách dùng: điền nội dung (từ template EN hoặc VN), mở file bằng trình duyệt,
+  Cmd/Ctrl + P → Save as PDF → A4, margins mặc định, bật "Background graphics" nếu cần.
+  Không cần cài gì thêm. Xóa comment trước khi chia sẻ file HTML.
+-->
+<style>
+  :root { --ink:#1a1a1a; --muted:#555; --rule:#d9d9d9; --accent:#0f4c81; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink);
+    font: 13.5px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f3f3f3;
+  }
+  .page {
+    width: 210mm; min-height: 297mm; margin: 12px auto; padding: 16mm 15mm;
+    background: #fff;
+  }
+  header { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 14px; }
+  h1 { font-size: 24px; margin: 0 0 2px; letter-spacing: .3px; }
+  .title { color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .contact { color: var(--muted); font-size: 12.5px; }
+  .contact a { color: var(--muted); text-decoration: none; }
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1.1px;
+    color: var(--accent); margin: 16px 0 6px; border-bottom: 1px solid var(--rule);
+    padding-bottom: 3px;
+  }
+  h3 { font-size: 14px; margin: 10px 0 1px; }
+  .meta { color: var(--muted); font-size: 12px; margin: 0 0 4px; }
+  ul { margin: 4px 0 8px; padding-left: 18px; }
+  li { margin-bottom: 3px; }
+  p { margin: 4px 0; }
+  .skills p { margin: 2px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  @media print {
+    body { background: #fff; }
+    .page { width: auto; min-height: auto; margin: 0; padding: 0; }
+    @page { size: A4; margin: 14mm 13mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <h1>[FULL NAME]</h1>
+    <div class="title">[Target title — khớp JD]</div>
+    <div class="contact">
+      [City, Vietnam] &nbsp;·&nbsp; [email] &nbsp;·&nbsp; [phone] &nbsp;·&nbsp;
+      <a href="https://github.com/[username]">github.com/[username]</a> &nbsp;·&nbsp;
+      <a href="https://linkedin.com/in/[username]">linkedin.com/in/[username]</a>
+    </div>
+  </header>
+
+  <section>
+    <h2>Summary</h2>
+    <p>[2–3 dòng tailor theo JD: số năm + domain + stack chính + 1 thành tích nổi bật.]</p>
+  </section>
+
+  <section class="skills">
+    <h2>Skills</h2>
+    <p><strong>Languages:</strong> [...]</p>
+    <p><strong>Frameworks/Platforms:</strong> [...]</p>
+    <p><strong>Infrastructure/Tools:</strong> [...]</p>
+  </section>
+
+  <section>
+    <h2>Experience</h2>
+    <h3>[Company] — [Title]</h3>
+    <p class="meta">[Start – End] · [1 dòng context: sản phẩm/domain, team size]</p>
+    <ul>
+      <li>[Action verb + việc làm + tech + kết quả đo được]</li>
+      <li>[...]</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Projects</h2>
+    <h3>[Project name] — <a href="[link]">[link]</a></h3>
+    <p class="meta">Stack: [...]</p>
+    <ul>
+      <li>[Đóng góp cá nhân + kết quả]</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Education</h2>
+    <h3>[University] — [Major]</h3>
+    <p class="meta">[Start – End] · [GPA nếu ≥ 7.5/10 hoặc ≥ 3.0/4.0]</p>
+  </section>
+
+  <section>
+    <h2>Certifications</h2>
+    <ul>
+      <li>[Chứng chỉ + điểm + năm]</li>
+    </ul>
+  </section>
+
+</div>
+</body>
+</html>

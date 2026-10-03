@@ -1,0 +1,23 @@
+# OS / editor
+.DS_Store
+*.tmp
+*.swp
+
+# ---------------------------------------------------------------------------
+# LOCAL (personal data — never shared). Each user creates their own.
+# The matching *.example.md files are shipped as templates.
+# ---------------------------------------------------------------------------
+/profile.md
+
+# jobs/, cv/, offers/ keep only the _example.md and .gitkeep (tracked); ignore the rest.
+/jobs/*
+!/jobs/_example.md
+!/jobs/.gitkeep
+
+/cv/*
+!/cv/_example-en.md
+!/cv/.gitkeep
+
+/offers/*
+!/offers/_example.md
+!/offers/.gitkeep
