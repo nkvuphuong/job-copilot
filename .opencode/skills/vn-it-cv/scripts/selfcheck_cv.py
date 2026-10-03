@@ -105,7 +105,10 @@ def check(cv: Path, profile_text: str):
 
 def main(argv):
     profile_text = PROFILE.read_text(encoding="utf-8")
-    targets = [Path(a) for a in argv] or sorted((ROOT / "cv").glob("*.md"))
+    # default: every real tailored CV. Skip `_*` (templates/examples shipped in the repo).
+    targets = [Path(a) for a in argv] or sorted(
+        p for p in (ROOT / "cv").glob("*.md") if not p.name.startswith("_")
+    )
     failed = False
     for cv in targets:
         problems = check(cv, profile_text)

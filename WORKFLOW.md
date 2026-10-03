@@ -65,7 +65,7 @@ Parse the JD into structured fields, then score against `profile.md` Targeting:
 2. **`match_score`** = weighted average of the 5 Targeting criteria (0–100). Nice-to-have adds at most +5.
 3. **`score_rationale`** = one line auditing the number, e.g. `skill 90 · sen 100 · loc 85 · sal 70 · dom 60 → 83`.
 4. `gap_skills[]` = JD skills with no evidence in the profile.
-5. Save to `jobs/YYYY-MM-<source>-<company-slug>-<role-slug>.md` (schema: `jobs/_example.md`), after dedupe (`rg -l '<url>' jobs/`).
+5. Save to `jobs/YYYY-MM-<source>-<company-slug>-<role-slug>.md` (schema: `jobs/_example.md`), after dedupe (`rg --no-ignore -l '<url>' jobs/`).
 
 ## Phase 4 — Tailor CV
 
@@ -95,10 +95,10 @@ Log every event in the job frontmatter (no separate event file):
 
 Reports (plain `rg`):
 ```bash
-rg --no-filename -o '^status: \w+' jobs/ | sort | uniq -c   # funnel
-rg -l '^applied_at: ""' jobs/ | wc -l                       # backlog (not yet applied)
-rg -l '^followup_at: 2026-01' jobs/                         # follow-ups this month
-rg -l '^referral: true' jobs/                               # referred applications
+rg --no-ignore --no-filename -o '^status: \w+' jobs/ | sort | uniq -c   # funnel
+rg --no-ignore -l '^applied_at: ""' jobs/ | wc -l                       # backlog (not yet applied)
+rg --no-ignore -l '^followup_at: 2026-01' jobs/                         # follow-ups this month
+rg --no-ignore -l '^referral: true' jobs/                               # referred applications
 ```
 On session start, if any `followup_at` ≤ today and status unchanged → the agent flags it.
 
@@ -121,7 +121,7 @@ When an offer lands: create `offers/<id>.md` (schema: `offers/_example.md`) with
 | Logged out mid-scan | detect the login form → ask the user to log in |
 | Missing list items | ITViec paginates via `?page=N` (not virtualized) — loop pages, dedupe by link |
 | `jev` 401/5xx/timeout | log `jev-error`, fall back to structural keyword filtering, don't block the scan |
-| Duplicate JD | `rg -l '<url>' jobs/` before writing |
+| Duplicate JD | `rg --no-ignore -l '<url>' jobs/` before writing |
 | DOM changed | prefer parsing `body.innerText` over hard selectors |
 
 ## Non-goals (YAGNI)

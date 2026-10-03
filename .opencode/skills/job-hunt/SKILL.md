@@ -20,7 +20,7 @@ Biến việc tìm việc thành pipeline có kiểm soát: **quét JD → triag
 1. **Trung thực tuyệt đối:** CV tailor chỉ được SELECT / REORDER / REWORD từ `profile.md`. **Cấm INVENT.** Mọi bullet truy về `evidence_id`. Không có evidence → không xuất hiện.
 2. **Không auto-apply.** Con người duyệt cuối + bấm nộp.
 3. **Hỏi scope trước khi quét** (source, keyword, level, location, remote, số lượng).
-4. **Dedupe trước khi ghi**: `rg -l '<url>' jobs/`.
+4. **Dedupe trước khi ghi**: `rg --no-ignore -l '<url>' jobs/`.
 5. **Không đổi ngày tháng/title** khi tailor; de-emphasize là lựa chọn có ý thức (ghi lại).
 6. Chạy skill này khi **cwd nằm trong repo** `job-copilot` (để `vn-it-cv` cũng load).
 
@@ -86,7 +86,7 @@ Score neo vào **Targeting** trong `profile.md` (trọng số + must-have + nice
 
 ## Phase 5 — Lưu `jobs/*.md`
 
-- Dedupe: `rg -l '<url>' jobs/` — có rồi thì bỏ qua.
+- Dedupe: `rg --no-ignore -l '<url>' jobs/` — có rồi thì bỏ qua.
 - Tên file: `jobs/YYYY-MM-<source>-<company-slug>-<role-slug>.md`.
 - Frontmatter (schema dưới) + body = raw JD.
 
@@ -145,11 +145,11 @@ notes: ""
 Báo cáo bằng `rg` (không cần script):
 
 ```bash
-rg --no-filename -o '^status: \w+' jobs/ | sort | uniq -c              # funnel
-rg -l '^status: applied' jobs/ | wc -l                                # đã nộp
-rg -l '^applied_at: ""' jobs/ | wc -l                                 # chưa nộp (backlog)
-rg -l '^followup_at: 2026-10' jobs/                                   # cần follow-up tháng 10
-rg -l '^referral: true' jobs/                                         # đơn có referral
+rg --no-ignore --no-filename -o '^status: \w+' jobs/ | sort | uniq -c              # funnel
+rg --no-ignore -l '^status: applied' jobs/ | wc -l                                # đã nộp
+rg --no-ignore -l '^applied_at: ""' jobs/ | wc -l                                 # chưa nộp (backlog)
+rg --no-ignore -l '^followup_at: 2026-10' jobs/                                   # cần follow-up tháng 10
+rg --no-ignore -l '^referral: true' jobs/                                         # đơn có referral
 ```
 
 > Nhắc chủ động: khi mở session, nếu có `followup_at` ≤ hôm nay và status chưa đổi → báo user.
@@ -170,7 +170,7 @@ rg -l '^referral: true' jobs/                                         # đơn c�
 | Hết login | Detect form login → báo user login trong MCP window |
 | List thiếu item | ITViec: phân trang `?page=N` (KHÔNG virtualized) → loop page; LinkedIn: offset `start` (xem `references/linkedin.md`) |
 | `jev 401/5xx/timeout` | Log `jev-error` → fallback: mở theo keyword structural, không chặn scan |
-| Trùng JD | `rg -l '<url>' jobs/` trước khi ghi |
+| Trùng JD | `rg --no-ignore -l '<url>' jobs/` trước khi ghi |
 | DOM đổi | Ưu tiên parse `body.innerText` thay vì selector cứng |
 | Board chưa verify | `references/<source>.md` còn nhãn SKELETON → verify + cập nhật file trước khi tin kết quả |
 
