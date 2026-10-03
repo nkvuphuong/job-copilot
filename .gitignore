@@ -9,7 +9,7 @@
 # ---------------------------------------------------------------------------
 /profile.md
 
-# jobs/, cv/, offers/ keep only the _example.md and .gitkeep (tracked); ignore the rest.
+# jobs/, cv/, offers/, prep/ keep only the _example.md and .gitkeep (tracked); ignore the rest.
 /jobs/*
 !/jobs/_example.md
 !/jobs/.gitkeep
@@ -21,3 +21,7 @@
 /offers/*
 !/offers/_example.md
 !/offers/.gitkeep
+
+/prep/*
+!/prep/_example.md
+!/prep/.gitkeep

@@ -4,9 +4,9 @@ The fixed pipeline. Each phase has an input, an output, and the tool/skill that 
 Data flows left to right; you can jump in at any phase.
 
 ```
-0 Setup ─▶ 1 Scope ─▶ 2 Scan ─▶ 3 Extract & Score ─▶ 4 Tailor CV ─▶ 5 Apply ─▶ 6 Track ─▶ 7 Offers ─▶ 8 Onboard
-                                                                                                        │
-                                                                        ◀────────────── Loop ────────────┘
+0 Setup ─▶ 1 Scope ─▶ 2 Scan ─▶ 3 Extract & Score ─▶ 4 Tailor CV ─▶ 5 Apply ─▶ 5.5 Prep ─▶ 6 Track ─▶ 7 Offers ─▶ 8 Onboard
+                                                                                    │                              │
+                                                                                    ◀────────── Loop ─────────────┘
 ```
 
 | # | Phase | Input | Output | Tool / skill |
@@ -17,6 +17,7 @@ Data flows left to right; you can jump in at any phase.
 | 3 | **Extract & Score** | each JD `keep` | `jobs/<id>.md` | `references/<source>.md` |
 | 4 | **Tailor CV** | `profile.md` + JD | `cv/<file>.md` (+ `.html`) | `vn-it-cv` + `selfcheck_cv.py` |
 | 5 | **Apply** | tailored CV | `status: applied` | **human** (no auto-apply) |
+| 5.5 | **Interview Prep** | `profile.md` + JD + (optional web) | `prep/<job-id>.md` | `references/interview-prep.md` |
 | 6 | **Track** | application events | frontmatter updates | `rg` reports |
 | 7 | **Offers** | offer details | `offers/<id>.md` + scorecard | scoring vs Targeting |
 | 8 | **Onboard & Loop** | accepted offer | checklist + archive | manual + `rg` |
@@ -82,6 +83,22 @@ Then open the `.html` and print to PDF (`Cmd/Ctrl+P` → A4, background graphics
 
 A human reviews the PDF and submits. **The agent never auto-applies.** Record `apply_method`.
 
+## Phase 5.5 — Interview Prep
+
+Once a job is `applied` (or later, when a round is scheduled), build `prep/<job-id>.md`
+(schema: `prep/_example.md`; guide: `.opencode/skills/job-hunt/references/interview-prep.md`).
+It is a **cue card** to review before each round — not a script to memorise, not an answer key.
+
+Four blocks:
+1. **JD digest** — must-have vs nice-to-have; the stack the JD *repeats* (what they care about); seniority signals (own/lead/design/mentor); 2–3 core responsibilities `[jd]`.
+2. **Company brief** — only from the JD + official pages **if fetched** (`webfetch` / MCP browser); product/business model, size/domain, surfaced stack, values, recent news (with date). Unknown → `[confirm: ...]`, never invented.
+3. **Technical prep** — map each JD requirement → `profile.md` evidence (strong/ok/weak) → `[gap: study X]`; likely questions by stack (a cue line, not a written answer); a **STAR story bank** drawn from 3–5 existing profile bullets, each with its `evidence_id`. No new claims, no invented stories.
+4. **Non-technical prep** — working process (Agile/review/CI-CD/on-call), problem-solving, communication, teamwork; **3–5 questions to ask them**; logistics.
+
+**Every line is source-tagged:** `[jd]` · `[web: <url>]` · `[profile: e0xx]` · `[guess]` · `[confirm: ...]`.
+Web access is opt-in; offline, fill from the JD and mark the rest `[confirm: ...]`.
+Update `prep_status` (`draft→ready→done`) and log each round in the "mock round log". Record `prep_ref` on the job.
+
 ## Phase 6 — Track
 
 Log every event in the job frontmatter (no separate event file):
@@ -90,7 +107,7 @@ Log every event in the job frontmatter (no separate event file):
 |---|---|
 | Submitted | `status: applied`, `applied_at: <date>`, `apply_method: …`, `followup_at: <applied_at + 7d>` |
 | Response / screen | `status: screen`, update `next_action` + `next_action_date` |
-| Tech / on-site | `status: tech` / `onsite`, `next_action` = what to prepare |
+| Tech / on-site | `status: tech` / `onsite`, `next_action` = what to prepare; build/update `prep/<job-id>.md` |
 | Rejected / ghosted | `status: rejected` / `ghosted`, clear `next_action` |
 
 Reports (plain `rg`):
@@ -99,6 +116,7 @@ rg --no-ignore --no-filename -o '^status: \w+' jobs/ | sort | uniq -c   # funnel
 rg --no-ignore -l '^applied_at: ""' jobs/ | wc -l                       # backlog (not yet applied)
 rg --no-ignore -l '^followup_at: 2026-01' jobs/                         # follow-ups this month
 rg --no-ignore -l '^referral: true' jobs/                               # referred applications
+rg --no-ignore -l '^prep_ref: ""' jobs/ | wc -l                         # applied but no prep yet
 ```
 On session start, if any `followup_at` ≤ today and status unchanged → the agent flags it.
 
@@ -126,4 +144,4 @@ When an offer lands: create `offers/<id>.md` (schema: `offers/_example.md`) with
 
 ## Non-goals (YAGNI)
 
-No auto-apply · no DB/UI (Markdown + `rg`) · no bespoke crawler (use the MCP session) · no grounding service (structural constraints + `selfcheck_cv.py`) — add only if a real hallucination slips through.
+No auto-apply · no DB/UI (Markdown + `rg`) · no bespoke crawler (use the MCP session) · no grounding service (structural constraints + `selfcheck_cv.py`) · **no written interview answer keys** (prep is a cue card) — add only if a real hallucination slips through.

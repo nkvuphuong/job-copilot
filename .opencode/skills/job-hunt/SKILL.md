@@ -1,6 +1,6 @@
 ---
 name: job-hunt
-description: Quét JD từ job board (ITViec/LinkedIn/TopCV/VietnamWorks), import JD dán/file, hoặc referral; triage bằng Jev, chấm điểm theo profile.md, lưu + theo dõi trạng thái ứng tuyển, và tailor CV trung thực theo từng JD (gọi skill vn-it-cv). Trigger: "quét JD", "tìm việc", "scan ITViec/LinkedIn", "import JD", "tailor CV theo JD", "theo dõi apply", "so sánh offer", "job hunt".
+description: Quét JD từ job board (ITViec/LinkedIn/TopCV/VietnamWorks), import JD dán/file, hoặc referral; triage bằng Jev, chấm điểm theo profile.md, lưu + theo dõi trạng thái ứng tuyển, tailor CV trung thực theo từng JD (gọi skill vn-it-cv), và chuẩn bị phỏng vấn (JD digest + company brief + technical/non-technical prep). Trigger: "quét JD", "tìm việc", "scan ITViec/LinkedIn", "import JD", "tailor CV theo JD", "theo dõi apply", "chuẩn bị phỏng vấn", "prep cho job X", "so sánh offer", "job hunt".
 license: MIT
 compatibility: opencode
 metadata:
@@ -119,6 +119,7 @@ applied_at: ""       # ISO date khi nộp; rỗng = chưa nộp
 apply_method: ""     # portal|email|linkedin|referral
 followup_at: ""      # ngày nên theo dõi lại
 cv_version: ""
+prep_ref: ""         # prep/<job-id>.md khi đã tạo interview prep
 notes: ""
 ---
 ```
@@ -131,6 +132,24 @@ notes: ""
 4. Output: `cv/<company>-<role>-<lang>.md`; render HTML bằng `python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md` → in PDF từ trình duyệt.
 5. Cập nhật `cv_version` + `status` trong `jobs/*.md`.
 
+## Phase 6.5 — Interview Prep (sau khi nộp / khi có lịch)
+
+Sau khi `status: applied` (hoặc muộn hơn khi có lịch phỏng vấn), tạo `prep/<job-id>.md` (schema `prep/_example.md`, hướng dẫn `references/interview-prep.md`). Mục tiêu: **cue card** để ứng viên không bỏ sót gì khi vào vòng — không phải script học thuộc.
+
+**4 khối:**
+1. **JD digest** — must-have vs nice-to-have; stack JD nhấn (lặp nhiều = họ quan tâm); signal seniority (own/lead/design/mentor); 2–3 responsibility chính `[jd]`.
+2. **Company brief** — chỉ từ JD + trang chính thức **nếu đã fetch**; product/mô hình, quy mô/domain, stack lộ ra, văn hóa, tin gần đây (kèm ngày). Thiếu nguồn → `[confirm: ...]`, **không bịa**.
+3. **Technical prep** — map JD → evidence `profile.md` (strong/ok/weak) → gap plan `[gap: ôn X]`; câu hỏi khả năng cao theo stack (cue, không viết sẵn đáp án); **STAR story bank** lấy từ 3–5 bullet có sẵn trong profile, kèm `evidence_id`. Cấm bịa story/skill mới.
+4. **Non-technical prep** — quy trình làm việc (Agile/review/CI-CD/on-call), problem-solving, giao tiếp/trình bày, teamwork; **3–5 câu hỏi ngược lại cho nhà tuyển dụng**; logistics (hình thức/thời lượng/người PV).
+
+**Nhãn nguồn bắt buộc:** `[jd]` · `[web: <url>]` · `[profile: e0xx]` · `[guess]` · `[confirm: ...]`. Không nêu fact công ty chưa đọc.
+
+- Web fetch chỉ khi user cho phép (dùng `webfetch` hoặc MCP browser). Offline → điền từ JD, phần còn lại `[confirm: ...]`.
+- Cập nhật `prep_status` (`draft→ready→done`) + ghi log từng vòng vào mục "Mock round log".
+- Ghi `prep_ref: prep/<job-id>.md` vào frontmatter `jobs/*.md`.
+
+> Khi user nói "prep cho job X", "chuẩn bị phỏng vấn <công ty>" → chạy phase này.
+
 ## Phase 7 — Track & report
 
 **Sự kiện ứng tuyển log vào frontmatter** (không cần file event riêng). Khi user báo tiến triển:
@@ -139,7 +158,7 @@ notes: ""
 |---|---|
 | Đã nộp đơn | `status: applied`, `applied_at: <ngày>`, `apply_method: portal\|email\|linkedin\|referral`, `followup_at: <applied_at + 7 ngày>` |
 | Phản hồi/screen | `status: screen`, cập nhật `next_action` + `next_action_date` |
-| PV tech/onsite | `status: tech` / `onsite`, `next_action` = chuẩn bị gì |
+| PV tech/onsite | `status: tech` / `onsite`, `next_action` = chuẩn bị gì; tạo/cập nhật `prep/<job-id>.md` |
 | Bị từ chối/ghosted | `status: rejected` / `ghosted`, `next_action: ""` |
 
 Báo cáo bằng `rg` (không cần script):
@@ -150,6 +169,8 @@ rg --no-ignore -l '^status: applied' jobs/ | wc -l                              
 rg --no-ignore -l '^applied_at: ""' jobs/ | wc -l                                 # chưa nộp (backlog)
 rg --no-ignore -l '^followup_at: 2026-10' jobs/                                   # cần follow-up tháng 10
 rg --no-ignore -l '^referral: true' jobs/                                         # đơn có referral
+rg --no-ignore -l '^prep_ref: ""' jobs/ | wc -l                                   # chưa có prep
+rg --no-ignore -l '^prep_ref: prep/' jobs/                                        # đã có prep
 ```
 
 > Nhắc chủ động: khi mở session, nếu có `followup_at` ≤ hôm nay và status chưa đổi → báo user.

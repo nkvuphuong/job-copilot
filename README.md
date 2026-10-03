@@ -6,7 +6,7 @@ It is **not** an auto-apply bot. A human reviews and submits every application. 
 
 ## The idea in one line
 
-`Setup → Scope → Scan → Extract & Score → Tailor CV → Apply → Track → Offers → Onboard → Loop`
+`Setup → Scope → Scan → Extract & Score → Tailor CV → Apply → Interview Prep → Track → Offers → Onboard → Loop`
 
 Full detail: **[WORKFLOW.md](WORKFLOW.md)**.
 
@@ -20,8 +20,9 @@ Full detail: **[WORKFLOW.md](WORKFLOW.md)**.
 | `jobs/_example.md` | Job-posting schema (frontmatter + raw JD) | ✅ |
 | `cv/_example-en.md` | Tailored-CV shape (with `<!-- e001 -->` trace) | ✅ |
 | `offers/_example.md` | Offer-comparison schema | ✅ |
+| `prep/_example.md` | Interview-prep cue card (JD digest + company brief + tech/non-tech) | ✅ |
 | `WORKFLOW.md` / `ONBOARDING.md` / `PREREQUISITES.md` | Docs | ✅ |
-| `profile.md`, `jobs/*`, `cv/*`, `offers/*` | **Your personal data** | ❌ gitignored |
+| `profile.md`, `jobs/*`, `cv/*`, `offers/*`, `prep/*` | **Your personal data** | ❌ gitignored |
 
 Your data stays local. Cloning the repo gives you the tool; you bring your own profile.
 
@@ -39,6 +40,7 @@ Then, in opencode, just talk:
 - "scan ITViec for senior backend in HCMC, 3 pages"
 - "tailor a CV for that Rakus job"
 - "I applied to Rakus — log it"
+- "prep me for the Acme interview"
 
 The `job-hunt` and `vn-it-cv` skills are project-local, so **you must run opencode from inside the repo**.
 

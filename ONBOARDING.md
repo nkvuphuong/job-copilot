@@ -60,7 +60,15 @@ python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md
 
 Open the `.html`, print to PDF (A4). Review it. Submit it yourself.
 
-## 7. Keep it running
+## 7. Prepare for the interview
+
+Once you've applied (or a round is booked):
+
+> "Prep me for the <job> interview."
+
+The agent builds `prep/<job-id>.md` — a cue card with a JD digest, a company brief, technical gaps + likely questions, and non-technical questions to expect. Company facts are source-tagged (`[jd]` / `[web]` / `[confirm]`); nothing is invented. Review it, add your own notes, and ask the agent to mock-interview you if you want.
+
+## 8. Keep it running
 
 After each application: "I applied to <job> — log it." Follow the funnel in [WORKFLOW.md](WORKFLOW.md) Phase 6.
 
