@@ -1,6 +1,6 @@
 ---
 name: job-hunt
-description: Quét JD từ job board (ITViec/LinkedIn/TopCV/VietnamWorks), import JD dán/file, hoặc referral; triage bằng Jev, chấm điểm theo profile.md, lưu + theo dõi trạng thái ứng tuyển, tailor CV trung thực theo từng JD (gọi skill vn-it-cv), và chuẩn bị phỏng vấn (JD digest + company brief + technical/non-technical prep). Trigger: "quét JD", "tìm việc", "scan ITViec/LinkedIn", "import JD", "tailor CV theo JD", "theo dõi apply", "chuẩn bị phỏng vấn", "prep cho job X", "so sánh offer", "job hunt".
+description: Quét JD từ job board (ITViec/LinkedIn/TopCV/VietnamWorks), import JD dán/file, hoặc referral; triage bằng Jev, chấm điểm theo profile.md, lưu + theo dõi trạng thái ứng tuyển, tailor CV trung thực theo từng JD (gọi skill vn-it-cv), và chuẩn bị phỏng vấn (JD digest + company brief + technical/non-technical prep + mock interview). Trigger: "quét JD", "tìm việc", "scan ITViec/LinkedIn", "import JD", "tailor CV theo JD", "theo dõi apply", "chuẩn bị phỏng vấn", "prep cho job X", "mock interview", "phỏng vấn thử", "quiz me", "so sánh offer", "job hunt".
 license: MIT
 compatibility: opencode
 metadata:
@@ -149,6 +149,13 @@ Sau khi `status: applied` (hoặc muộn hơn khi có lịch phỏng vấn), t�
 - Ghi `prep_ref: prep/<job-id>.md` vào frontmatter `jobs/*.md`.
 
 > Khi user nói "prep cho job X", "chuẩn bị phỏng vấn <công ty>" → chạy phase này.
+
+**Mock interview (sub-step, khi user yêu cầu):** "mock interview", "phỏng vấn thử", "quiz me", "đóng vai interviewer".
+- Đọc `prep/<job-id>.md`; xác nhận loại vòng (screen/tech/manager) + thời lượng (mặc định tech 30–45').
+- **Hỏi từng câu một**, chờ trả lời rồi mới qua câu kế. Chỉ dùng câu hỏi trong prep file + STAR story bank `profile.md`; **không bịa** fact công ty/stack ngoài JD.
+- Giữ vai interviewer, không đưa đáp án giữa vòng; feedback sau khi user nói "stop/end".
+- Feedback: mỗi câu → điểm mạnh, chỗ mơ hồ, **1 cách sửa cụ thể**; ghi vào "Mock round log" + bổ sung gap plan nếu lộ lỗ hổng. Không viết lại đáp án thành script.
+- Chi tiết + anti-patterns: `references/interview-prep.md` mục "Mock interview".
 
 ## Phase 7 — Track & report
 

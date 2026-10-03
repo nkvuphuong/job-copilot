@@ -99,6 +99,11 @@ Four blocks:
 Web access is opt-in; offline, fill from the JD and mark the rest `[confirm: ...]`.
 Update `prep_status` (`draft→ready→done`) and log each round in the "mock round log". Record `prep_ref` on the job.
 
+**Mock interview (optional sub-step).** Say "mock interview" / "phỏng vấn thử" / "quiz me" and the agent plays
+interviewer for one round: one question at a time, using only the prep file's questions and the `profile.md`
+story bank (it must not invent company facts). It stays in role, gives no answers mid-round, then delivers
+per-answer feedback and updates the mock round log. Details + anti-patterns: `references/interview-prep.md`.
+
 ## Phase 6 — Track
 
 Log every event in the job frontmatter (no separate event file):

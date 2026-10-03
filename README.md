@@ -41,6 +41,7 @@ Then, in opencode, just talk:
 - "tailor a CV for that Rakus job"
 - "I applied to Rakus — log it"
 - "prep me for the Acme interview"
+- "mock interview me for the Acme tech round"
 
 The `job-hunt` and `vn-it-cv` skills are project-local, so **you must run opencode from inside the repo**.
 

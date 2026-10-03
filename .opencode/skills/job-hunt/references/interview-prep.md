@@ -52,9 +52,36 @@ This mirrors the CV rule: the same anti-hallucination discipline, applied to pre
 2. **No new claims.** Technical prep never adds a skill that isn't in `profile.md` — same guardrail as the CV.
 3. **Update per round.** After each round, log it in the "Mock round log" and refine. `prep_status`: `draft` → `ready` → `done`.
 4. **Offline-safe.** Without web access, fill the company brief from the JD alone and mark the rest `[confirm: ...]`. Never fill the gap with a guess.
-5. **Agent may quiz you.** If asked, the agent can play interviewer using only the questions in the file and the `profile.md` story bank — but it must not invent facts about the company either.
+5. **Agent may quiz you.** If asked, the agent can run a mock round (below) using only the questions in the file and the `profile.md` story bank — but it must not invent facts about the company either.
 
-## Anti-patterns
+## Mock interview (optional sub-step)
+
+When the candidate says "mock interview", "phỏng vấn thử", "quiz me", or "đóng vai interviewer" for job X:
+
+**Setup.** Read `prep/<job-id>.md`. Confirm the round type (screen / tech / manager) and length. Default: tech, 30–45 min.
+
+**Rules the agent MUST follow:**
+1. **One question at a time.** Ask, then stop and wait for the candidate's answer. Never dump a list.
+2. **Only sources allowed:** questions in the prep file (section 3 "Likely questions" + section 4) and the `profile.md` story bank. **Do not invent company facts** or stack the JD didn't mention.
+3. **No answers given during the round.** If asked for the answer mid-round, defer: "I'll give feedback at the end."
+4. **Be a realistic, polite interviewer** — not a host. Follow up once on a weak answer, then move on.
+5. **Stay in role** until the candidate says "stop" / "end mock".
+
+**Round shape (default tech):**
+- Warm-up (1–2 min): intro / "tell me about yourself" (from prep §3 story bank).
+- Technical (bulk): 4–6 questions from prep §3, progressing easy → hard, each tied to a JD skill.
+- Behavioral (2–3): STAR prompts from prep §3 (ownership, conflict, failure, mentoring).
+- Candidate questions (2–3 min): "what would you like to ask us?" — evaluate the prep §4 list.
+- Close.
+
+**Feedback (after the candidate says stop/end).** Give, per answer: what was strong, what was vague, and **one concrete fix** (which story to use, which gap to study). Then:
+- Update the `prep/<job-id>.md` "Mock round log" table (date, round, what went well, what to fix).
+- If a gap surfaced, add it to the §3 gap plan as `[gap: ...]`.
+- Do **not** rewrite the candidate's answers into a script — the point is practice, not memorising.
+
+**Anti-patterns for the mock:** asking 10 questions at once · revealing the answer mid-round · inventing a "the interviewer will definitely ask about X" claim · grading the candidate's skill level (you are not the employer).
+
+## Anti-patterns (prep overall)
 
 - ❌ A "company brief" full of plausible-but-unverified claims.
 - ❌ Writing complete STAR answers to memorise.

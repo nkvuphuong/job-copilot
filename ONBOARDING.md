@@ -66,7 +66,11 @@ Once you've applied (or a round is booked):
 
 > "Prep me for the <job> interview."
 
-The agent builds `prep/<job-id>.md` — a cue card with a JD digest, a company brief, technical gaps + likely questions, and non-technical questions to expect. Company facts are source-tagged (`[jd]` / `[web]` / `[confirm]`); nothing is invented. Review it, add your own notes, and ask the agent to mock-interview you if you want.
+The agent builds `prep/<job-id>.md` — a cue card with a JD digest, a company brief, technical gaps + likely questions, and non-technical questions to expect. Company facts are source-tagged (`[jd]` / `[web]` / `[confirm]`); nothing is invented. Review it, add your own notes, then practise:
+
+> "Mock interview me for the <job> — tech round, 30 min."
+
+The agent asks one question at a time, stays in role, and gives feedback at the end.
 
 ## 8. Keep it running
 
