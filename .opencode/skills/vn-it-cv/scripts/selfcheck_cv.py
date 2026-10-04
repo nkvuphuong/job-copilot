@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 """Honesty self-check for tailored CVs against profile.md (source of truth).
 
-Two checks, both must pass:
+Checks (all must pass):
 
 1. evidence_id: every `<!-- e0xx -->` in a CV must exist as `[e0xx]` in profile.md.
-2. claim scope: every tech/skill token in the CV's `## Skills` section must
-   appear somewhere in profile.md. Catches "claim creep" (writing
-   `microservices`/`idempotency` when the profile only says "3M orders/year").
+2. claim scope: every tech/skill token in the CV's `## Skills` section must be
+   backed by an *evidence-bearing* part of profile.md — i.e. it must appear in a
+   §4 Experiences / §5 Projects bullet, OR be the name of a skill whose §3 row has
+   `confirmed: true`. Tokens only listed in the §3 table with `confirmed: false`
+   (list-only / exploring) do NOT count. This closes the "claim creep" hole where
+   PostgreSQL/Golang/Kafka leaked into CVs while the profile only listed them.
+3. summary scope (warn-only by default): numbers/metrics in the CV `## Summary`
+   should trace to profile.md. Reported as warnings unless --strict-summary.
 
 Usage:
     python3 selfcheck_cv.py                 # all cv/*-en.md + cv/*-vn.md
     python3 selfcheck_cv.py cv/foo-en.md
-Exit code 1 if any check fails.
+    python3 selfcheck_cv.py --strict-summary
+Exit code 1 if any check fails (summary warnings do not fail unless --strict-summary).
 """
 
 import re
@@ -57,10 +63,42 @@ def _prefixes(w: str):
     return w[:6]
 
 
+def _evidence_scope(profile_text: str) -> str:
+    """The parts of profile.md that count as *backing* for claims.
+
+    = every bullet under §4 Experiences / §5 Projects (lines starting with `- `,
+    which carry the `[e0xx]` evidence), PLUS the name column of every §3 Skills
+    row whose `confirmed` cell is `true`. Deliberately EXCLUDES:
+      - non-bullet prose (headings, company context, positioning lines),
+      - skill rows marked `confirmed: false` (list-only / exploring).
+    """
+    chunks = []
+
+    # §3 Skills rows with confirmed: true -> take the skill token(s)
+    m = re.search(r"##\s+3\.\s+Skills\s*\n(.*?)(?=\n##\s|\Z)", profile_text, re.S)
+    if m:
+        for row in m.group(1).splitlines():
+            cells = [c.strip() for c in row.strip().strip("|").split("|")]
+            if len(cells) >= 7 and cells[0].startswith("s"):
+                skill, confirmed = cells[1], cells[5].lower()
+                if confirmed == "true":
+                    chunks.append(skill)
+
+    # §4 + §5 bullets (evidence-bearing)
+    for sec in ("Experiences", "Projects"):
+        m = re.search(rf"##\s+\d+\.\s+{sec}\s*\n(.*?)(?=\n##\s|\Z)", profile_text, re.S)
+        if m:
+            for line in m.group(1).splitlines():
+                if line.strip().startswith("- "):
+                    chunks.append(line)
+
+    return "\n".join(chunks)
+
+
 def _profile_vocab(profile_text: str):
-    """Lowercased profile text + word stems, so 'optimization'/'queries'/
+    """Lowercased evidence-scoped text + word stems, so 'optimization'/'queries'/
     '3M'/'orders' match 'Optimized SQL queries' / '3M+ orders'."""
-    low = profile_text.lower()
+    low = _evidence_scope(profile_text).lower()
     stems = set()
     for w in re.findall(r"[a-z0-9+#.]+", low):
         stems.add(w)
@@ -78,8 +116,33 @@ def _skills_tokens(section: str):
             yield w
 
 
-def check(cv: Path, profile_text: str):
+def _summary_warnings(cv_text: str, profile_text: str):
+    """Warn on distinctive metrics in the CV Summary that do not trace to profile.
+
+    Only multi-char numeric tokens ($, %, k/M numbers, ratios) are checked, to
+    keep false positives low. This is warn-only unless --strict-summary.
+    """
+    warns = []
+    m = re.search(r"##\s+Summary\s*\n(.*?)(?=\n##\s|\Z)", cv_text, re.S)
+    if not m:
+        return warns
+    summary = m.group(1)
+    low = profile_text.lower()
+    # numbers with a metric signal: $10,000  20%  3M  60-98%  90%
+    for tok in sorted(set(re.findall(r"\$?\d[\d,\.]*\s*(?:%|k\+?|m\+?)|[+-]?\d+%", summary, re.I))):
+        t = tok.strip()
+        bare = re.sub(r"[%$,+\s]", "", t).lower()
+        if not bare:
+            continue
+        if bare in low or t.lower() in low:
+            continue
+        warns.append(f"summary metric '{t}' not found in profile.md")
+    return warns
+
+
+def check(cv: Path, profile_text: str, strict_summary: bool = False):
     problems = []
+    warnings = []
     text = cv.read_text(encoding="utf-8")
 
     # 1. evidence ids
@@ -88,7 +151,7 @@ def check(cv: Path, profile_text: str):
     for e in sorted(used - known):
         problems.append(f"evidence {e} not in profile.md")
 
-    # 2. claim scope in Skills (stem-match, so word-form variation is fine)
+    # 2. claim scope in Skills (stem-match against the *evidence* scope)
     low, stems = _profile_vocab(profile_text)
     m = re.search(r"##\s+Skills\s*\n(.*?)(?=\n##\s|\Z)", text, re.S)
     if m:
@@ -99,11 +162,17 @@ def check(cv: Path, profile_text: str):
             parts = [p for p in re.split(r"[-/]", w) if p]
             if parts and all(p in stems or _stem(p) in stems or _prefixes(_stem(p)) in stems for p in parts):
                 continue
-            problems.append(f"skill '{w}' not backed by profile.md")
-    return problems
+            problems.append(f"skill '{w}' not backed by profile.md (evidence/confirmed)")
+
+    # 3. summary (warn-only by default)
+    for w in _summary_warnings(text, profile_text):
+        (problems if strict_summary else warnings).append(w)
+    return problems, warnings
 
 
 def main(argv):
+    strict = "--strict-summary" in argv
+    argv = [a for a in argv if a != "--strict-summary"]
     profile_text = PROFILE.read_text(encoding="utf-8")
     # default: every real tailored CV. Skip `_*` (templates/examples shipped in the repo).
     targets = [Path(a) for a in argv] or sorted(
@@ -111,7 +180,9 @@ def main(argv):
     )
     failed = False
     for cv in targets:
-        problems = check(cv, profile_text)
+        problems, warnings = check(cv, profile_text, strict)
+        for w in warnings:
+            print(f"warn {cv.name}: {w}")
         if problems:
             failed = True
             print(f"FAIL {cv.name}")

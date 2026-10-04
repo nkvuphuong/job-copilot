@@ -79,5 +79,5 @@ After each application: "I applied to <job> — log it." Follow the funnel in [W
 ## Troubleshooting
 
 - **Skills not found** → you're not running opencode from inside the repo.
-- **`selfcheck_cv.py` fails** → a CV references an unknown `e0xx` or claims a skill absent from `profile.md`. Fix the CV, not the check.
+- **`selfcheck_cv.py` fails** → a CV references an unknown `e0xx` or claims a skill not backed by an evidence bullet / `confirmed: true` skill in `profile.md`. Fix the CV, not the check (or add real evidence to `profile.md` first).
 - **Scraper returns nothing** → the site's DOM changed; update the matching `references/<source>.md`.

@@ -76,6 +76,15 @@ def _inline(text: str) -> str:
     return text
 
 
+_ENTRY_HEADING_SECTIONS = ("education", "certifications", "certifications and languages",
+                           "languages", "projects", "selected achievements")
+
+
+def _is_entry_heading(section: str) -> bool:
+    """A bold paragraph acts as a sub-heading in these sections (not + pending meta)."""
+    return section.strip().lower() in _ENTRY_HEADING_SECTIONS
+
+
 def _contact(text: str) -> str:
     """Contact line: emit links, then auto-linkify bare github/linkedin/email."""
     text = _inline(text)
@@ -154,13 +163,13 @@ def render(md_path: Path) -> str:
             pending_meta = False
             section = s[3:].strip()
             label = section.lower().replace(" & ", " and ").replace("/", "").strip()
-            if label in ("skills", "technical skills"):
+            if label in ("skills", "technical skills", "core skills", "skills and tools"):
                 out.append('<section class="skills"><h2>' + html.escape(section) + "</h2>")
                 mode = "skills"
             else:
                 out.append(f"<h2>{html.escape(section)}</h2>")
         elif s.startswith("- "):
-            if section.lower() in ("skills", "technical skills"):
+            if section.lower() in ("skills", "technical skills", "core skills", "skills and tools"):
                 out.append(f"<p>{_inline(s[2:].strip())}</p>")
             else:
                 if mode is None:
@@ -168,7 +177,7 @@ def render(md_path: Path) -> str:
                     mode = "ul"
                 out.append(f"<li>{_inline(s[2:].strip())}</li>")
         else:  # paragraph / meta line
-            if section in ("Education", "Certifications") and _BOLD.search(s) and not pending_meta:
+            if _BOLD.search(s) and not pending_meta and _is_entry_heading(section):
                 out.append(f"<h3>{_inline(s)}</h3>")
                 pending_meta = True
             elif pending_meta:

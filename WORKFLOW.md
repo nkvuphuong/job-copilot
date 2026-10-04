@@ -72,11 +72,21 @@ Parse the JD into structured fields, then score against `profile.md` Targeting:
 
 Load `vn-it-cv`, run GENERATE with `profile.md` + JD. Constraints: only bullets from the profile, each keeps `<!-- e0xx -->`.
 
+**Pre-tailor gate (EN / international targets):** if the JD is English or remote/international **and**
+`profile.md` §1 Meta still has `[confirm: ...]` for Languages or Work authorization → **stop and ask the
+user** before generating. These two lines are screened first by overseas employers; a CV missing them is
+weak, and the agent must never invent a level.
+
+**Skills rule:** only list skills marked `confirmed: true` in `profile.md` §3. Skills marked
+`confirmed: false` (list-only / exploring, e.g. Kafka) **must not** appear in the CV — the self-check
+enforces this.
+
 **Mandatory self-check before the CV leaves your machine:**
 ```bash
 python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md   # must print ok
 python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md     # md -> print HTML
 ```
+Summary metrics are checked **warn-only** by default (use `--strict-summary` to fail on them).
 Then open the `.html` and print to PDF (`Cmd/Ctrl+P` → A4, background graphics on).
 
 ## Phase 5 — Apply

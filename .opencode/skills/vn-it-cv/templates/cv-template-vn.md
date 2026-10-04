@@ -14,23 +14,28 @@
 - Điện thoại: [...] · Email: [email chuyên nghiệp]
 - Địa chỉ: [Quận/Huyện, Tỉnh/Thành phố — không cần số nhà] · Quê quán: [nếu JD/thông lệ yêu cầu]
 - GitHub: [...] · LinkedIn: [...]
+- Ngoại ngữ: [Tiếng Anh — level; Tiếng Việt: bản ngữ] · Quyền làm việc: [VN citizen / cần sponsor?]
 - [Ảnh thẻ 3×4]
 
 ## Mục tiêu nghề nghiệp
-[2–3 dòng, gắn với vị trí: số năm kinh nghiệm + stack chính + giá trị mang lại. Tránh câu sáo rỗng.]
+[2–3 dòng, gắn với vị trí: số năm kinh nghiệm + stack chính + giá trị mang lại. Tránh câu sáo rỗng.
+ Lấy từ profile.md §1b Positioning — không tự nghĩ số mới.]
+
+## Thành tích nổi bật
+<!-- Tùy chọn: 3–5 thành tích định lượng mạnh, mỗi bullet 1 `<!-- e0xx -->`. Bỏ nếu kinh nghiệm đã đủ nổi bật. -->
+- [Thành tích định lượng] <!-- e0xx -->
 
 ## Kỹ năng
-- **Ngôn ngữ lập trình:** [...]
-- **Framework/Nền tảng:** [...]
-- **Cơ sở dữ liệu/Hạ tầng/Công cụ:** [...]
-<!-- Chỉ để kỹ năng thật sự dùng; kỹ năng không có bullet chứng minh trong profile.md chỉ thêm nếu JD yêu cầu + user xác nhận. -->
+- **[Nhóm]:** [...]
+<!-- CHỈ list skill `confirmed: true` trong profile.md §3 (có bullet/stack chứng minh).
+     Skill `confirmed: false` (list-only/exploring) → KHÔNG list; selfcheck_cv.py sẽ chặn. -->
 
 
 ## Kinh nghiệm làm việc
 
 ### [Công ty] — [Chức danh] · [Bắt đầu – Kết thúc]
 [1 dòng bối cảnh: sản phẩm/domain, quy mô team]
-- [Động từ hành động] + [việc làm + công nghệ] + [kết quả đo được]
+- [Động từ hành động] + [việc làm + công nghệ] + [kết quả đo được] <!-- e0xx -->
 - [...]
 
 ### [Công ty] — [Chức danh] · [Bắt đầu – Kết thúc]
@@ -40,7 +45,7 @@
 <!-- Fresher: đưa lên trước Kinh nghiệm làm việc -->
 ### [Tên dự án] — [link nếu có]
 [1 dòng mục tiêu] · Công nghệ: [...]
-- [Đóng góp cá nhân + kết quả]
+- [Đóng góp cá nhân + kết quả] <!-- e1xx -->
 
 ## Học vấn
 **[Trường]** — [Chuyên ngành] · [Bắt đầu – Kết thúc]

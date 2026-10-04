@@ -21,7 +21,7 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 - `templates/cv-template-en.md` / `templates/cv-template-vn.md` — skeleton khi generate
 - `templates/cv-print.html` — bản A4 in PDF bằng trình duyệt
 - `scripts/render_cv.py` — render `cv/*.md` → HTML in PDF (tự strip `<!-- evidence_id -->`)
-- `scripts/selfcheck_cv.py` — kiểm trung thực: evidence_id + skill claim phải map về `profile.md`
+- `scripts/selfcheck_cv.py` — kiểm trung thực: evidence_id + skill claim phải map về bullet/`confirmed: true` trong `profile.md`; Summary warn-only
 
 ## Bước 0 — Routing
 
@@ -37,9 +37,10 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 1. **KHÔNG bịa**: không tự thêm kinh nghiệm, số liệu, chức danh, thời gian, công nghệ user chưa dùng. Thiếu thông tin → hỏi, hoặc đánh dấu `[cần xác nhận: ...]` trong output.
 2. **Skill chỉ đưa vào CV khi có bằng chứng hoặc user xác nhận.** Phân biệt 2 mức:
    - **Có evidence** (map được bullet trong profile.md) → để trong mục Skills bình thường.
-   - **Chỉ "có trong list kỹ năng"** (profile đánh dấu, không có bullet chứng minh) → CHỈ đưa nếu JD yêu cầu và user xác nhận đã dùng thật; khi đó ghi trong CV không kèm ngữ cảnh/số liệu giả. Còn lại: bỏ.
+   - **Chỉ "có trong list kỹ năng"** (`confirmed: false`) → **KHÔNG** list trong CV. Muốn dùng thì user phải xác nhận dùng thật → thêm bullet bằng chứng vào `profile.md` §4/§5 và bật `confirmed: true` TRƯỚC. `selfcheck_cv.py` chặn skill `confirmed: false`.
    - Cấm suy diễn "chắc cũng dùng" từ việc có tech liên quan.
-3. **Summary cũng phải truy về evidence**: mọi con số/"12+ years"/domain trong Summary phải khớp `profile.md` Meta + ít nhất 1 `evidence_id`. Không nêu thành tích không có bullet.
+3. **Summary lấy từ §1b Positioning**: mọi con số/headline trong Summary phải khớp `profile.md` §1b + Meta. Không tự nghĩ số/định vị mới. `selfcheck_cv.py` cảnh báo (warn) metric không truy về được.
+3b. **Gate Meta cho CV EN**: nếu target EN/quốc tế mà `profile.md` §1 Meta còn `[confirm: ...]` ở Languages/Work authorization → dừng, hỏi user (không bịa level).
 4. Số liệu thị trường/lương chỉ lấy từ `references/vn-market.md`, kèm nguồn + ngày; không tự sinh số mới.
 5. Xác định **loại công ty đích** (ma trận trong `vn-market.md` mục 1) trước khi chọn chuẩn CV — không mặc định một chuẩn. Không rõ → hỏi user.
 6. Trao đổi với user bằng tiếng Việt; ngôn ngữ CV theo JD (mặc định EN cho IT).
@@ -56,7 +57,7 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 4. **Draft** theo `templates/cv-template-en.md` hoặc `cv-template-vn.md` (theo target).
    - Bullet = Action + tech + kết quả; chỗ thiếu số để `[cần xác nhận: ...]`, không tự điền.
 5. **Self-score** bằng `references/rubric.md` → báo điểm + danh sách chỗ cần user xác nhận.
-   - **Self-check trung thực:** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail = có evidence_id lạ hoặc skill claim vượt `profile.md` → sửa trước khi báo user.
+   - **Self-check trung thực:** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail = có evidence_id lạ hoặc skill claim vượt bullet/`confirmed: true` trong `profile.md` → sửa trước khi báo user. Summary metric là warn-only (thêm `--strict-summary` để fail).
 6. **Output**: hỏi đường dẫn, mặc định `./cv/<Ten>-<Role>-2026.md`. Render HTML in PDF:
    `python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md` (batch: `cv/*.md`), rồi `Cmd+P` → Save as PDF (A4).
 7. Nhắc: nộp bản PDF; xin referral **trước khi** apply nếu chưa nộp.

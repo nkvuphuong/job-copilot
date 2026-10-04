@@ -128,7 +128,7 @@ notes: ""
 
 1. Load skill `vn-it-cv` → chạy workflow GENERATE với input = `profile.md` + JD.
 2. **Ràng buộc:** chỉ chọn bullet có trong `profile.md`; mỗi bullet giữ `<!-- evidence_id -->`.
-3. **Self-check (bắt buộc):** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail (evidence_id lạ / skill claim vượt `profile.md` / số liệu Summary không có nguồn) → sửa, không tự bịa.
+3. **Self-check (bắt buộc):** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail (evidence_id lạ / skill `confirmed: false` bị list / skill claim vượt `profile.md`) → sửa, không tự bịa. Số liệu Summary chỉ được **warn** (không fail) trừ khi chạy `--strict-summary`.
 4. Output: `cv/<company>-<role>-<lang>.md`; render HTML bằng `python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md` → in PDF từ trình duyệt.
 5. Cập nhật `cv_version` + `status` trong `jobs/*.md`.
 
