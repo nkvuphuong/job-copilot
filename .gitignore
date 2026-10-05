@@ -33,3 +33,6 @@ __pycache__/
 /prep/*
 !/prep/_example.md
 !/prep/.gitkeep
+
+# Archify diagram visual-check sidecars (regenerable evidence)
+/docs/diagrams/*.visual-check.*

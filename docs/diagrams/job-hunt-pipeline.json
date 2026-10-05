@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pipeline job-hunt (job-copilot)",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "scan", "label": "Quét & triage", "focus": ["scope", "scan", "screen", "score"], "note": "Hỏi scope, quét board, lọc bằng Jev rồi chấm điểm theo profile.md." },
+      { "id": "save-cv", "label": "Lưu & tailor CV", "focus": ["save", "tailor", "prep"], "note": "Dedupe, lưu state vào DB, rồi tailor CV trung thực theo JD." },
+      { "id": "apply-offer", "label": "Nộp & offer", "focus": ["apply", "offer"], "note": "Người duyệt rồi nộp; track qua job_events tới offer/onboard." }
+    ]
+  },
+  "lanes": [
+    { "id": "user", "label": "Ứng viên" },
+    { "id": "source", "label": "Nguồn JD" },
+    { "id": "triage", "label": "Triage (Jev) & Score" },
+    { "id": "state", "label": "DB + Files" },
+    { "id": "cv", "label": "Tailor CV & Prep" },
+    { "id": "outcome", "label": "Nộp · Track" },
+    { "id": "exception", "label": "Bỏ qua / Từ chối", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "intake", "label": "Quét & triage", "fromCol": 0, "toCol": 2 },
+    { "id": "score", "label": "Chấm & lưu", "fromCol": 3, "toCol": 4, "variant": "emphasis" },
+    { "id": "deliver", "label": "CV → nộp → offer", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["scope", "scan", "screen", "score", "save", "tailor", "prep", "apply", "offer"],
+  "nodes": [
+    { "id": "scope", "lane": "user", "col": 0, "type": "frontend", "label": "Hỏi scope", "sublabel": "source · keyword" },
+    { "id": "scan", "lane": "source", "col": 1, "type": "backend", "label": "Quét JD", "sublabel": "ITViec · TopCV" },
+    { "id": "screen", "lane": "triage", "col": 2, "type": "backend", "label": "Jev screen", "sublabel": "relevant · level", "tag": "lọc" },
+    { "id": "score", "lane": "triage", "col": 3, "type": "backend", "label": "Chấm điểm", "sublabel": "match_score" },
+    { "id": "save", "lane": "state", "col": 4, "type": "database", "label": "Dedupe · lưu", "sublabel": "DB · jobs/*.md" },
+    { "id": "tailor", "lane": "cv", "col": 4, "type": "cloud", "label": "Tailor CV", "sublabel": "vn-it-cv · evidence" },
+    { "id": "prep", "lane": "cv", "col": 5, "type": "cloud", "label": "Prep PV", "sublabel": "cue card · mock" },
+    { "id": "apply", "lane": "outcome", "col": 5, "type": "external", "label": "Nộp đơn", "sublabel": "duyệt tay", "tag": "no auto-apply" },
+    { "id": "offer", "lane": "user", "col": 5, "type": "frontend", "label": "Offer", "sublabel": "scorecard" },
+    { "id": "filtered", "lane": "exception", "col": 3, "type": "security", "label": "Bỏ qua", "sublabel": "trùng · gate" }
+  ],
+  "edges": [
+    { "from": "scope", "to": "scan", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "scan", "to": "screen", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "screen", "to": "score" },
+    { "from": "score", "to": "save", "label": "đạt gate", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "save", "to": "tailor", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "tailor", "to": "prep" },
+    { "from": "prep", "to": "apply", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "apply", "to": "offer", "label": "track", "variant": "emphasis", "route": "outside-right", "fromSide": "right", "toSide": "right" },
+    { "from": "score", "to": "filtered", "label": "vi phạm", "variant": "security", "role": "error", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Đường chính", "items": ["Quét board hoặc import JD, lọc bằng Jev trước khi mở", "Chấm match_score theo Targeting trong profile.md", "Lưu raw JD ra file, state vào SQLite"] },
+    { "dot": "amber", "title": "Cổng kiểm soát", "items": ["Jev screen loại item không khớp trước khi tốn công mở", "Gate must-have → rejected / match_score 0", "Dedupe exact tự chặn; fuzzy để người xác nhận", "Không auto-apply — người duyệt rồi bấm nộp"] },
+    { "dot": "rose", "title": "Trung thực & nguồn state", "items": ["CV tailor chỉ SELECT/REORDER/REWORD từ profile.md, giữ evidence_id", "DB là nguồn state; file chỉ chứa nội dung", "prep chỉ dùng JD + profile, thiếu nguồn thì [confirm]"] }
+  ]
+}

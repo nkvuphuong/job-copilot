@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Quy trình skill vn-it-cv (CV IT Việt Nam)",
+    "quality_profile": "showcase",
+    "viewBox": [1000, 900],
+    "views": [
+      { "id": "generate", "label": "GENERATE — tạo CV theo JD", "focus": ["request", "routing", "draft", "selfcheck", "export"], "note": "Từ JD + profile.md tới CV PDF đã tự kiểm trung thực." },
+      { "id": "review-auto", "label": "REVIEW-AUTO — đối chiếu tool ngoài", "focus": ["export", "scan", "reconcile", "deliver"], "note": "Xuất PDF, upload tool ATS, rồi map về rubric 100 điểm." },
+      { "id": "honesty", "label": "Cổng trung thực", "focus": ["draft", "selfcheck", "reconcile"], "note": "Không bịa; skill confirmed:false bị chặn; keyword gap không được nhồi." }
+    ]
+  },
+  "lanes": [
+    { "id": "user", "label": "Người dùng" },
+    { "id": "skill", "label": "Skill vn-it-cv" },
+    { "id": "build", "label": "Tạo CV" },
+    { "id": "guard", "label": "Guardrails trung thực" },
+    { "id": "scripts", "label": "Scripts" },
+    { "id": "external", "label": "Tool review ngoài" }
+  ],
+  "phases": [
+    { "id": "route", "label": "Phân loại & nạp nguồn", "fromCol": 0, "toCol": 1 },
+    { "id": "build", "label": "Tạo & tự kiểm", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "ship", "label": "Xuất & đối chiếu", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["request", "routing", "draft", "selfcheck", "export", "scan", "reconcile", "deliver"],
+  "nodes": [
+    { "id": "request", "lane": "user", "col": 0, "type": "frontend", "label": "Yêu cầu CV", "sublabel": "từ JD" },
+    { "id": "routing", "lane": "skill", "col": 1, "type": "backend", "label": "Routing", "sublabel": "Bước 0" },
+    { "id": "draft", "lane": "build", "col": 2, "type": "backend", "label": "Draft", "sublabel": "theo JD", "tag": "không bịa" },
+    { "id": "selfcheck", "lane": "guard", "col": 3, "type": "security", "label": "selfcheck", "sublabel": "evidence", "tag": "chặn" },
+    { "id": "rubric", "lane": "skill", "col": 3, "type": "backend", "label": "Rubric", "sublabel": "/100" },
+    { "id": "export", "lane": "scripts", "col": 4, "type": "cloud", "label": "export PDF", "sublabel": "text-based" },
+    { "id": "scan", "lane": "external", "col": 5, "type": "external", "label": "Tool ATS", "sublabel": "Resumly" },
+    { "id": "reconcile", "lane": "skill", "col": 5, "type": "backend", "label": "Đối chiếu", "sublabel": "rubric" },
+    { "id": "deliver", "lane": "user", "col": 5, "type": "frontend", "label": "CV PDF", "sublabel": "sẵn sàng" }
+  ],
+  "edges": [
+    { "from": "request", "to": "routing", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "routing", "to": "draft", "label": "GENERATE", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "draft", "to": "selfcheck", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "selfcheck", "to": "export", "label": "đạt", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top", "labelAt": [465, 539] },
+    { "from": "selfcheck", "to": "draft", "label": "vi phạm", "variant": "security", "role": "return", "route": "return-left", "fromSide": "left", "toSide": "left" },
+    { "from": "export", "to": "scan", "label": "REVIEW-AUTO", "variant": "dashed", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "scan", "to": "reconcile", "fromSide": "top", "toSide": "bottom" },
+    { "from": "reconcile", "to": "deliver", "label": "chốt /100", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" },
+    { "from": "routing", "to": "rubric", "label": "REVIEW · SCORE", "role": "branch", "fromSide": "right", "toSide": "left" },
+    { "from": "rubric", "to": "reconcile", "role": "branch", "fromSide": "right", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Đường chính (GENERATE)", "items": ["Routing phân loại yêu cầu ở Bước 0", "Draft tailor theo JD, giữ nguyên evidence id từ profile.md", "selfcheck_cv.py phải đạt trước khi xuất PDF"] },
+    { "dot": "cyan", "title": "Bổ sung mới", "items": ["export_cv.py: PDF text-based qua Chrome headless, --docx tùy chọn", "REVIEW-AUTO: upload tool ATS rồi đối chiếu rubric", "5 references: rubric, best-practices, vn-market, review-sources, cv-format-ats"] },
+    { "dot": "rose", "title": "Guardrails trung thực", "items": ["Không bịa kinh nghiệm, số liệu, chức danh", "Skill confirmed:false bị chặn khỏi CV", "Keyword gap của tool không được nhồi nếu thiếu evidence", "Gate Meta cho CV EN khi profile.md còn [confirm]"] }
+  ]
+}
