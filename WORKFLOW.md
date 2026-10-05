@@ -14,11 +14,11 @@ Data flows left to right; you can jump in at any phase.
 | 0 | **Setup** | CV PDF / your answers | `profile.md` | `vn-it-cv` + interview |
 | 1 | **Scope** | `profile.md` Targeting | scan parameters | `question` tool |
 | 2 | **Scan** | source + filters | keep-list (Jev-filtered) | `chrome-devtools` MCP + `jev` |
-| 3 | **Extract & Score** | each JD `keep` | `jobs/<id>.md` | `references/<source>.md` |
-| 4 | **Tailor CV** | `profile.md` + JD | `cv/<file>.md` (+ `.html`) | `vn-it-cv` + `selfcheck_cv.py` |
-| 5 | **Apply** | tailored CV | `status: applied` | **human** (no auto-apply) |
+| 3 | **Extract & Score** | each JD `keep` | `jobs/<id>.md` (raw JD) + row in DB | `references/<source>.md` + `jc` |
+| 4 | **Tailor CV** | `profile.md` + JD | `cv/<file>.md` (+ `.html`) + `cv_versions` | `vn-it-cv` + `selfcheck_cv.py` |
+| 5 | **Apply** | tailored CV | `jobs` row: `status: applied` | **human** — UI / `jc status` |
 | 5.5 | **Interview Prep** | `profile.md` + JD + (optional web) | `prep/<job-id>.md` | `references/interview-prep.md` |
-| 6 | **Track** | application events | frontmatter updates | `rg` reports |
+| 6 | **Track** | application events | `job_events` + `jobs.status` | **human** — UI / `jc report` |
 | 7 | **Offers** | offer details | `offers/<id>.md` + scorecard | scoring vs Targeting |
 | 8 | **Onboard & Loop** | accepted offer | checklist + archive | manual + `rg` |
 
@@ -37,6 +37,10 @@ Produce `profile.md` (the source of truth). Three ways:
 3. **Agent-assisted.** Ask the agent to interview you cluster by cluster: experience → skills (level/years) → targeting (weights, must-have, nice-to-have). It writes the file and marks anything unconfirmed as `[confirm: ...]`.
 
 **Exit criteria:** `profile.md` has Meta + Targeting + ≥1 Experience with evidence ids. Skills with no proving bullet are marked "list only".
+
+**State store (one-time):** `python3 tools/jobcopilot/cli.py init` creates `jobcopilot.db`
+(gitignored). It holds lifecycle/identity/run state; `profile.md` and content files
+stay as-is. Existing Markdown is imported once with `cli.py import` (see `ROADMAP.md`).
 
 ## Phase 1 — Scope
 
@@ -66,7 +70,19 @@ Parse the JD into structured fields, then score against `profile.md` Targeting:
 2. **`match_score`** = weighted average of the 5 Targeting criteria (0–100). Nice-to-have adds at most +5.
 3. **`score_rationale`** = one line auditing the number, e.g. `skill 90 · sen 100 · loc 85 · sal 70 · dom 60 → 83`.
 4. `gap_skills[]` = JD skills with no evidence in the profile.
-5. Save to `jobs/YYYY-MM-<source>-<company-slug>-<role-slug>.md` (schema: `jobs/_example.md`), after dedupe (`rg --no-ignore -l '<url>' jobs/`).
+5. **Dedupe + save (DB is the state store):**
+   ```bash
+   # 1) already known? (exact = auto-block; fuzzy = flag for human confirm)
+   python3 tools/jobcopilot/cli.py dedupe-check '<url>' --source <src> --company '<c>' --title '<t>' --location '<l>'
+   # 2) write the raw JD to jobs/<id>.md (header: title/company/url, then verbatim JD)
+   # 3) register the structured row (score, skills, gaps) — status defaults to saved
+   python3 tools/jobcopilot/cli.py add --json '{"id":"<id>","title":"…","company":"…","source":"…","url":"…",
+     "location":"…","remote":"…","seniority":"…","match_score":83,"score_rationale":"…",
+     "skills_required":[…],"skills_nice":[…],"gap_skills":[…],"run_id":<id>}'
+   ```
+   `dedupe-check` exact hit → skip. Fuzzy hit → `add` sets `duplicate_of`; a **human
+   confirms** on the UI (tier-2 is never auto-skipped). File naming stays
+   `jobs/<id>.md`, `id = YYYY-MM-<source>-<company-slug>-<role-slug>`.
 
 ## Phase 4 — Tailor CV
 
@@ -91,7 +107,12 @@ Then open the `.html` and print to PDF (`Cmd/Ctrl+P` → A4, background graphics
 
 ## Phase 5 — Apply
 
-A human reviews the PDF and submits. **The agent never auto-applies.** Record `apply_method`.
+A human reviews the PDF and submits. **The agent never auto-applies.** Record it on the UI
+or via CLI:
+```bash
+python3 tools/jobcopilot/cli.py status <id> --to applied \
+  --at 2026-10-05 --method portal --followup-at 2026-10-12
+```
 
 ## Phase 5.5 — Interview Prep
 
@@ -116,24 +137,22 @@ per-answer feedback and updates the mock round log. Details + anti-patterns: `re
 
 ## Phase 6 — Track
 
-Log every event in the job frontmatter (no separate event file):
+State lives in the DB; every transition is logged to `job_events` (no frontmatter).
+Do it on the UI, or via CLI:
 
 | Event | Write |
 |---|---|
-| Submitted | `status: applied`, `applied_at: <date>`, `apply_method: …`, `followup_at: <applied_at + 7d>` |
-| Response / screen | `status: screen`, update `next_action` + `next_action_date` |
-| Tech / on-site | `status: tech` / `onsite`, `next_action` = what to prepare; build/update `prep/<job-id>.md` |
-| Rejected / ghosted | `status: rejected` / `ghosted`, clear `next_action` |
+| Submitted | `jc status <id> --to applied --at <date> --method … --followup-at <applied+7d>` |
+| Response / screen | `jc status <id> --to screen --next-action … --next-action-date …` |
+| Tech / on-site | `jc status <id> --to tech` (or `onsite`); build/update `prep/<job-id>.md` |
+| Rejected / ghosted | `jc status <id> --to rejected` (`ghosted`) |
 
-Reports (plain `rg`):
+Reports come from the DB (CLI or UI dashboard — **no folder scan**):
 ```bash
-rg --no-ignore --no-filename -o '^status: \w+' jobs/ | sort | uniq -c   # funnel
-rg --no-ignore -l '^applied_at: ""' jobs/ | wc -l                       # backlog (not yet applied)
-rg --no-ignore -l '^followup_at: 2026-01' jobs/                         # follow-ups this month
-rg --no-ignore -l '^referral: true' jobs/                               # referred applications
-rg --no-ignore -l '^prep_ref: ""' jobs/ | wc -l                         # applied but no prep yet
+python3 tools/jobcopilot/cli.py report        # funnel + backlog + follow-up due
+python3 tools/jobcopilot/server.py            # UI: http://127.0.0.1:8765
 ```
-On session start, if any `followup_at` ≤ today and status unchanged → the agent flags it.
+On session start, run `cli.py report`; if `followup_due` is non-empty → the agent flags it.
 
 ## Phase 7 — Offers
 
@@ -154,9 +173,9 @@ When an offer lands: create `offers/<id>.md` (schema: `offers/_example.md`) with
 | Logged out mid-scan | detect the login form → ask the user to log in |
 | Missing list items | ITViec paginates via `?page=N` (not virtualized) — loop pages, dedupe by link |
 | `jev` 401/5xx/timeout | log `jev-error`, fall back to structural keyword filtering, don't block the scan |
-| Duplicate JD | `rg --no-ignore -l '<url>' jobs/` before writing |
+| Duplicate JD | `cli.py dedupe-check '<url>'` before writing (exact auto-block, fuzzy → human confirm) |
 | DOM changed | prefer parsing `body.innerText` over hard selectors |
 
 ## Non-goals (YAGNI)
 
-No auto-apply · no DB/UI (Markdown + `rg`) · no bespoke crawler (use the MCP session) · no grounding service (structural constraints + `selfcheck_cv.py`) · **no written interview answer keys** (prep is a cue card) — add only if a real hallucination slips through.
+No auto-apply · **DB/UI đang triển khai từng phần** (state + dedupe + run trong SQLite, xem `ROADMAP.md`; bước 5–6 còn lại) · no bespoke crawler (use the MCP session) · no grounding service (structural constraints + `selfcheck_cv.py`) · **no written interview answer keys** (prep is a cue card) — add only if a real hallucination slips through.

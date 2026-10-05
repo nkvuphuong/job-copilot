@@ -20,7 +20,7 @@ Biến việc tìm việc thành pipeline có kiểm soát: **quét JD → triag
 1. **Trung thực tuyệt đối:** CV tailor chỉ được SELECT / REORDER / REWORD từ `profile.md`. **Cấm INVENT.** Mọi bullet truy về `evidence_id`. Không có evidence → không xuất hiện.
 2. **Không auto-apply.** Con người duyệt cuối + bấm nộp.
 3. **Hỏi scope trước khi quét** (source, keyword, level, location, remote, số lượng).
-4. **Dedupe trước khi ghi**: `rg --no-ignore -l '<url>' jobs/`.
+4. **Dedupe trước khi ghi**: `python3 tools/jobcopilot/cli.py dedupe-check '<url>'`.
 5. **Không đổi ngày tháng/title** khi tailor; de-emphasize là lựa chọn có ý thức (ghi lại).
 6. Chạy skill này khi **cwd nằm trong repo** `job-copilot` (để `vn-it-cv` cũng load).
 
@@ -82,47 +82,40 @@ Score neo vào **Targeting** trong `profile.md` (trọng số + must-have + nice
 2. **match_score** = trung bình có trọng số 5 tiêu chí Targeting (skill/stack, seniority, location, salary, domain), mỗi tiêu chí 0–100. Nice-to-have cộng tối đa +5 (không vượt 100).
 3. **`score_rationale`**: 1 dòng, dạng `skill 90 · sen 100 · loc 90 · sal 80 · dom 60 → 88`, kèm gap chính. Đây là thứ để audit con số, không chỉ `notes`.
 4. `gap_skills[]` = skill JD yêu cầu mà profile không có evidence.
-5. Chỉ giữ vào `jobs/` nếu qua gate; dưới ngưỡng (mặc định < 60) thì báo + hỏi có lưu không.
+5. Chỉ lưu nếu qua gate; dưới ngưỡng (mặc định < 60) thì báo + hỏi có lưu không.
 
-## Phase 5 — Lưu `jobs/*.md`
+## Phase 5 — Lưu: raw JD ra file + state vào DB
 
-- Dedupe: `rg --no-ignore -l '<url>' jobs/` — có rồi thì bỏ qua.
-- Tên file: `jobs/YYYY-MM-<source>-<company-slug>-<role-slug>.md`.
-- Frontmatter (schema dưới) + body = raw JD.
+**DB là nguồn state** (`jobcopilot.db`, xem `docs/spec-db-ui.md`). File chỉ chứa nội dung.
 
-```yaml
----
-id: 2026-10-itviec-acme-be
-title: Backend Engineer
-company: Acme
-source: itviec
-url: https://...
-location: Ho Chi Minh
-remote: hybrid
-seniority: mid
-salary_min: 0
-salary_max: 0
-currency: VND
-skills_required: [Java, Spring]
-skills_nice: [Kafka]
-lang_req: [en]
-posted_date: 2026-10-01
-match_score: 82
-score_rationale: "skill 90 · sen 100 · loc 85 · sal 70 · dom 60 → 83"  # audit con số
-gap_skills: [Kafka]
-status: saved        # saved|applied|screen|tech|onsite|offer|rejected|ghosted|closed
-referral: false
-referral_contact: ""  # tên/kênh người giới thiệu (khi referral: true)
-next_action: ""
-next_action_date: ""
-applied_at: ""       # ISO date khi nộp; rỗng = chưa nộp
-apply_method: ""     # portal|email|linkedin|referral
-followup_at: ""      # ngày nên theo dõi lại
-cv_version: ""
-prep_ref: ""         # prep/<job-id>.md khi đã tạo interview prep
-notes: ""
----
-```
+1. **Dedupe trước khi ghi** (thay cho `rg`):
+   ```bash
+   python3 tools/jobcopilot/cli.py dedupe-check '<url>' --source <src> \
+     --company '<c>' --title '<t>' --location '<l>'
+   ```
+   - `exact` khác null → đã có, **bỏ qua**.
+   - `fuzzy` khác rỗng → vẫn thêm, nhưng `add` sẽ set `duplicate_of`; **người xác nhận trên UI** (không auto-skip).
+2. **Ghi raw JD** vào `jobs/<id>.md` với header hiển thị, rồi tới JD nguyên văn:
+   ```
+   # <title> — <company>
+
+   Company: <company> · Source: <source>
+   URL: <url>
+
+   <raw JD>
+   ```
+3. **Đăng ký structured row** (score/skills/gaps) + gắn run:
+   ```bash
+   python3 tools/jobcopilot/cli.py add --json '{
+     "id":"<id>","title":"…","company":"…","source":"…","url":"…",
+     "location":"…","remote":"hybrid","seniority":"mid",
+     "salary_min":0,"salary_max":0,"currency":"VND",
+     "skills_required":["Java","Spring"],"skills_nice":["Kafka"],"lang_req":["en"],
+     "match_score":82,"score_rationale":"skill 90 · sen 100 · loc 85 · sal 70 · dom 60 → 83",
+     "gap_skills":["Kafka"],"verdict":"keep","run_id":<run-id>}'
+   ```
+   `id = YYYY-MM-<source>-<company-slug>-<role-slug>`; tên file = `id`. Lifecycle
+   (`status/applied_at/…`) **không** nằm trong file — đổi qua UI hoặc `jc status`.
 
 ## Phase 6 — Tailor CV (gọi `vn-it-cv`)
 
@@ -146,7 +139,7 @@ Sau khi `status: applied` (hoặc muộn hơn khi có lịch phỏng vấn), t�
 
 - Web fetch chỉ khi user cho phép (dùng `webfetch` hoặc MCP browser). Offline → điền từ JD, phần còn lại `[confirm: ...]`.
 - Cập nhật `prep_status` (`draft→ready→done`) + ghi log từng vòng vào mục "Mock round log".
-- Ghi `prep_ref: prep/<job-id>.md` vào frontmatter `jobs/*.md`.
+- Đặt cue card tại `prep/<job-id>.md`. `prep_status` sẽ chuyển vào DB ở bước B5 (`ROADMAP.md`); v1 chưa có bảng prep.
 
 > Khi user nói "prep cho job X", "chuẩn bị phỏng vấn <công ty>" → chạy phase này.
 
@@ -159,32 +152,27 @@ Sau khi `status: applied` (hoặc muộn hơn khi có lịch phỏng vấn), t�
 
 ## Phase 7 — Track & report
 
-**Sự kiện ứng tuyển log vào frontmatter** (không cần file event riêng). Khi user báo tiến triển:
+**Sự kiện log vào DB + `job_events`** (không sửa file). Khi user báo tiến triển, ghi qua CLI/UI:
 
 | Sự kiện | Ghi |
 |---|---|
-| Đã nộp đơn | `status: applied`, `applied_at: <ngày>`, `apply_method: portal\|email\|linkedin\|referral`, `followup_at: <applied_at + 7 ngày>` |
-| Phản hồi/screen | `status: screen`, cập nhật `next_action` + `next_action_date` |
-| PV tech/onsite | `status: tech` / `onsite`, `next_action` = chuẩn bị gì; tạo/cập nhật `prep/<job-id>.md` |
-| Bị từ chối/ghosted | `status: rejected` / `ghosted`, `next_action: ""` |
+| Đã nộp đơn | `jc status <id> --to applied --at <ngày> --method portal\|email\|linkedin\|referral --followup-at <applied+7d>` |
+| Phản hồi/screen | `jc status <id> --to screen --next-action … --next-action-date …` |
+| PV tech/onsite | `jc status <id> --to tech` / `--to onsite`; tạo/cập nhật `prep/<job-id>.md` |
+| Bị từ chối/ghosted | `jc status <id> --to rejected` / `--to ghosted` |
 
-Báo cáo bằng `rg` (không cần script):
+Báo cáo từ DB — **không quét folder**:
 
 ```bash
-rg --no-ignore --no-filename -o '^status: \w+' jobs/ | sort | uniq -c              # funnel
-rg --no-ignore -l '^status: applied' jobs/ | wc -l                                # đã nộp
-rg --no-ignore -l '^applied_at: ""' jobs/ | wc -l                                 # chưa nộp (backlog)
-rg --no-ignore -l '^followup_at: 2026-10' jobs/                                   # cần follow-up tháng 10
-rg --no-ignore -l '^referral: true' jobs/                                         # đơn có referral
-rg --no-ignore -l '^prep_ref: ""' jobs/ | wc -l                                   # chưa có prep
-rg --no-ignore -l '^prep_ref: prep/' jobs/                                        # đã có prep
+python3 tools/jobcopilot/cli.py report     # funnel + backlog (chưa nộp) + followup_due
+python3 tools/jobcopilot/server.py         # UI: http://127.0.0.1:8765
 ```
 
-> Nhắc chủ động: khi mở session, nếu có `followup_at` ≤ hôm nay và status chưa đổi → báo user.
+> Nhắc chủ động: khi mở session, chạy `cli.py report`; nếu `followup_due` khác rỗng → báo user.
 
 ## Phase 8 — Offer → Onboard → Loop
 
-**Offer:** khi có offer, tạo `offers/<id>.md` (schema `offers/_example.md`: base/bonus/equity/benefits/level/growth/risk/deadline) + scorecard theo trọng số Targeting; set job `status: offer`.
+**Offer:** khi có offer, tạo `offers/<id>.md` (schema `offers/_example.md`: base/bonus/equity/benefits/level/growth/risk/deadline) + scorecard theo trọng số Targeting; đổi state bằng `jc status <id> --to offer` (hoặc UI).
 
 **Onboard:** khi chốt offer → `offers/<id>.md` `status: accepted` + checklist onboarding (giấy tờ, thiết bị, mục tiêu 30/60/90 ngày). Việc thủ công, skill chỉ nhắc.
 
@@ -198,10 +186,10 @@ rg --no-ignore -l '^prep_ref: prep/' jobs/                                      
 | Hết login | Detect form login → báo user login trong MCP window |
 | List thiếu item | ITViec: phân trang `?page=N` (KHÔNG virtualized) → loop page; LinkedIn: offset `start` (xem `references/linkedin.md`) |
 | `jev 401/5xx/timeout` | Log `jev-error` → fallback: mở theo keyword structural, không chặn scan |
-| Trùng JD | `rg --no-ignore -l '<url>' jobs/` trước khi ghi |
+| Trùng JD | `cli.py dedupe-check '<url>'` trước khi ghi (exact auto-block; fuzzy → người confirm) |
 | DOM đổi | Ưu tiên parse `body.innerText` thay vì selector cứng |
 | Board chưa verify | `references/<source>.md` còn nhãn SKELETON → verify + cập nhật file trước khi tin kết quả |
 
 ## Non-goals (YAGNI)
 
-Không auto-apply · không DB/UI (dùng Markdown + `rg`) · không crawler riêng (dùng MCP session) · không grounding script (dùng ràng buộc cấu trúc + self-check) — thêm khi có ca hallucination lọt.
+Không auto-apply · DB/UI đang triển khai từng phần (state/dedupe/run trong SQLite — `docs/spec-db-ui.md`, `ROADMAP.md`; file vẫn giữ nội dung) · không crawler riêng (dùng MCP session) · không grounding script (dùng ràng buộc cấu trúc + self-check) — thêm khi có ca hallucination lọt.

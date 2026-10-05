@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>job-copilot</title>
+<style>
+  :root { --bg:#0f1216; --card:#171b21; --fg:#e6e9ee; --mut:#8b95a3; --acc:#4f9cf9; --line:#262c35; --warn:#e0a13a; }
+  * { box-sizing:border-box; } body { margin:0; font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  header { padding:16px 20px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:baseline; }
+  h1 { font-size:16px; margin:0; } .mut { color:var(--mut); }
+  main { padding:20px; max-width:1200px; margin:0 auto; }
+  .cards { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 14px; min-width:92px; }
+  .card b { display:block; font-size:20px; } .card span { color:var(--mut); font-size:12px; }
+  .bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  select, input, button { background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font:inherit; }
+  button { cursor:pointer; } button:hover { border-color:var(--acc); }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.03em; }
+  tr:last-child td { border-bottom:0; }
+  .tag { display:inline-block; font-size:11px; padding:1px 7px; border-radius:999px; border:1px solid var(--line); color:var(--mut); }
+  .dup { color:var(--warn); border-color:var(--warn); }
+  .score { font-variant-numeric:tabular-nums; }
+  a { color:var(--acc); text-decoration:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>job-copilot</h1>
+  <span class="mut" id="sub">local · DB là nguồn state</span>
+</header>
+<main>
+  <div class="cards" id="funnel"></div>
+  <div class="bar">
+    <select id="f-status"><option value="">status: all</option></select>
+    <select id="f-source"><option value="">source: all</option></select>
+    <select id="f-seniority"><option value="">seniority: all</option></select>
+    <button id="refresh">refresh</button>
+    <span class="mut" id="due"></span>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Company / title</th><th>Source</th><th>Seniority</th><th>Score</th>
+      <th>Status</th><th>Follow-up</th><th>Next action</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</main>
+<script>
+const STATUSES = ["saved","applied","screen","tech","onsite","offer","rejected","ghosted","closed"];
+const $ = s => document.querySelector(s);
+const esc = s => (s ?? "").toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function addDays(iso, n) { const d = new Date(iso); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); }
+const today = () => new Date().toISOString().slice(0,10);
+
+function opts(sel, values) {
+  for (const v of values) { const o = document.createElement("option"); o.value = v; o.textContent = v; sel.append(o); }
+}
+
+async function api(path, body) {
+  const r = await fetch(path, body ? { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) } : {});
+  return r.json();
+}
+
+async function load() {
+  const q = new URLSearchParams();
+  for (const k of ["status","source","seniority"]) { const v = $("#f-"+k).value; if (v) q.set(k, v); }
+  const [rep, jobs] = await Promise.all([api("/api/report"), api("/api/jobs?" + q)]);
+
+  $("#funnel").innerHTML = STATUSES.map(s =>
+    `<div class="card"><b>${rep.funnel[s] || 0}</b><span>${s}</span></div>`).join("");
+  const due = rep.followup_due || [];
+  $("#due").textContent = due.length ? `⚠ ${due.length} follow-up due: ${due.map(d => d.id.slice(-24)).join(", ")}` : "";
+
+  $("#rows").innerHTML = jobs.map(j => `
+    <tr data-id="${esc(j.id)}">
+      <td><b>${esc(j.company)}</b><div class="mut">${esc(j.title)}</div>
+          ${j.duplicate_of ? `<span class="tag dup">dup of ${esc(j.duplicate_of.slice(-24))}</span>
+             <button data-act="clear-dup" data-id="${esc(j.id)}">not a dup</button>` : ""}</td>
+      <td><span class="tag">${esc(j.source)}</span></td>
+      <td>${esc(j.seniority)}</td>
+      <td class="score">${j.match_score ?? ""}</td>
+      <td><select data-act="status" data-id="${esc(j.id)}">
+        ${STATUSES.map(s => `<option ${s === j.status ? "selected":""}>${s}</option>`).join("")}
+      </select></td>
+      <td>${esc(j.followup_at)}</td>
+      <td class="mut">${esc(j.next_action)}</td>
+    </tr>`).join("");
+}
+
+document.addEventListener("change", async e => {
+  const t = e.target;
+  if (t.dataset.act !== "status") return;
+  const id = t.dataset.id, to = t.value;
+  const body = { to };
+  if (to === "applied") { body.applied_at = today(); body.followup_at = addDays(today(), 7); }
+  await api(`/api/jobs/${encodeURIComponent(id)}/status`, body);
+  load();
+});
+
+document.addEventListener("click", async e => {
+  const id = e.target.dataset && e.target.dataset.id;
+  if (e.target.dataset && e.target.dataset.act === "clear-dup") {
+    await api(`/api/jobs/${encodeURIComponent(id)}/duplicate`, { duplicate_of: "" });
+    load();
+  }
+});
+
+$("#refresh").onclick = load;
+["status","source","seniority"].forEach(k => $(`#f-${k}`).onchange = load);
+opts($("#f-status"), STATUSES);
+opts($("#f-source"), ["itviec","linkedin","topcv","vietnamworks","import","referral"]);
+opts($("#f-seniority"), ["intern","fresher","junior","mid","senior","lead","manager"]);
+load();
+</script>
+</body>
+</html>

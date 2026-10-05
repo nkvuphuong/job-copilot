@@ -3,6 +3,14 @@
 *.tmp
 *.swp
 
+# Python
+__pycache__/
+*.pyc
+
+# Local DB + migration backups (personal data)
+/jobcopilot.db
+/jobs/.backup/
+
 # ---------------------------------------------------------------------------
 # LOCAL (personal data — never shared). Each user creates their own.
 # The matching *.example.md files are shipped as templates.
