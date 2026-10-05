@@ -18,6 +18,7 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 - `references/best-practices.md` — nguyên tắc CV cốt lõi (generate + review)
 - `references/vn-market.md` — chuẩn CV theo loại công ty, platform, fresher, lương tham chiếu (nguồn + ngày)
 - `references/rubric.md` — rubric 100 điểm, anti-patterns, mô phỏng scan
+- `references/review-sources.md` — nguồn review bên ngoài (r/EngineeringResumes, ByteByteGo, ATS guides) + tool upload (Resumly…) + cách đối chiếu
 - `templates/cv-template-en.md` / `templates/cv-template-vn.md` — skeleton khi generate
 - `templates/cv-print.html` — bản A4 in PDF bằng trình duyệt
 - `scripts/render_cv.py` — render `cv/*.md` → HTML in PDF (tự strip `<!-- evidence_id -->`)
@@ -31,6 +32,7 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 | "viết CV", "tạo CV", "update CV", "viết lại", "tailor theo JD" | **GENERATE** |
 | "review CV", "góp ý", "CV ổn chưa", đưa CV + hỏi chung | **REVIEW** |
 | "chấm điểm", "cho điểm", "đánh giá nhanh" | **SCORE** |
+| "đối chiếu tool review", "upload lên ATS checker", "lấy nhận xét tự động" | **REVIEW-AUTO** |
 | Chỉ đưa CV, không nói rõ | Hỏi muốn REVIEW đầy đủ hay SCORE nhanh (mặc định REVIEW) |
 
 ## Guardrails (bắt buộc, mọi workflow)
@@ -76,6 +78,18 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 ## Workflow SCORE (nhanh)
 
 Chỉ chạy: mô phỏng scan (6–10s) + bảng điểm rubric + verdict + 3 lỗi nặng nhất. Không viết lại, không checklist dài.
+
+## Workflow REVIEW-AUTO (upload & đối chiếu)
+
+Dùng khi user muốn "đối chiếu với tool review bên ngoài" / "lấy nhận xét tự động". Đọc `references/review-sources.md`.
+
+1. **Xuất PDF** text-based: `python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md` → `cv/<file>.pdf`.
+2. **Xin phép user** trước khi upload — CV có info cá nhân (email/SĐT) ra site bên thứ 3. Nếu user muốn riêng tư: bỏ/anonymize dòng contact trong 1 bản copy tạm trước khi upload.
+3. **Upload qua chrome-devtools MCP** lên 1 tool free trong `review-sources.md` (mặc định **Resumly**, không cần login):
+   - Điền file vào `input[type=file]` (dùng `upload_file`), submit, chờ report.
+   - Chỉ dùng tool **free + không cần login** trừ khi user đồng ý ngược lại.
+4. **Đối chiếu** theo `review-sources.md` mục 3: map dimension tool → tiêu chí rubric; keyword gaps phải qua **luật trung thực** (guardrail 2) — không nhồi.
+5. **Output**: điểm rubric /100 (chốt) + bảng đối chiếu điểm tool ↔ rubric + việc sửa theo severity. Nêu rõ điểm tool chỉ là tín hiệu bổ sung, không thay rubric.
 
 ## Format output REVIEW
 
