@@ -54,8 +54,8 @@ Pick a source reference in `.opencode/skills/job-hunt/references/`:
 | Source | Reference | Status |
 |---|---|---|
 | ITViec | `references/itviec.md` | ✅ verified |
+| TopCV | `references/topcv.md` | ✅ verified |
 | LinkedIn | `references/linkedin.md` | 🟡 skeleton |
-| TopCV | `references/topcv.md` | 🟡 skeleton |
 | VietnamWorks | `references/vietnamworks.md` | 🟡 skeleton |
 | **Import / paste** | (no reference) | ✅ paste a JD or point to a file |
 

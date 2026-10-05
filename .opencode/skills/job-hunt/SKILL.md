@@ -36,7 +36,7 @@ Stale Chrome profile: `pkill -f "user-data-dir=$HOME/.cache/chrome-devtools-mcp/
 
 ## Phase 1 — Hỏi scope (dùng `question` tool)
 
-- **Source**: ITViec (verified) · LinkedIn/TopCV/VietnamWorks (skeleton) · **import** (dán JD/đưa file) · **referral** (nội bộ).
+- **Source**: ITViec (verified) · TopCV (verified) · LinkedIn/VietnamWorks (skeleton) · **import** (dán JD/đưa file) · **referral** (nội bộ).
 - **Keyword / role** (vd "backend java", "golang").
 - **Level / location / remote** (mặc định lấy từ `profile.md` mục Targeting).
 - **Số lượng / số trang** cần quét.
@@ -52,8 +52,8 @@ Chọn cách theo source (Phase 1). **Nguồn hạng nhất là `import`** — k
 **B. Referral / nội bộ:**
 - Không có scraper. User mô tả cơ hội → tạo `jobs/*.md` với `source: referral`, `referral: true`, `referral_contact: <tên/kênh>`.
 
-**C. Job board** (ITViec verified; LinkedIn/TopCV/VietnamWorks là skeleton — verify trước khi tin):
-> ITViec: 20 card/trang, phân trang `?page=N` (KHÔNG virtualized). Extract compact, Jev lọc trước khi mở.
+**C. Job board** (ITViec + TopCV verified; LinkedIn/VietnamWorks là skeleton — verify trước khi tin):
+> ITViec: 20 card/trang, phân trang `?page=N` (KHÔNG virtualized). TopCV: ~52 card/trang, `?page=N`, JSON-LD `JobPosting` ở detail. Extract compact, Jev lọc trước khi mở.
 
 1. Navigate tới trang search với filter (keyword/location) — selectors/URL theo `references/<source>.md`.
 2. **Collect-while-scroll** trên list kết quả, dedupe theo link JD, extract compact mỗi item:

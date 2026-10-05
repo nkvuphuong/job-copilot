@@ -8,6 +8,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 _TRACKING = {
     "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
     "gclid", "fbclid", "ref", "referrer", "trk", "trk_email", "src",
+    "ta_source", "u_sr_id",
 }
 
 
@@ -42,8 +43,15 @@ def company_slug(company: str) -> str:
 
 
 def extract_external_id(url: str) -> str:
-    """Trailing numeric id in the path, e.g. ...-koala-digital-5349 -> 5349."""
-    m = re.search(r"(\d+)\s*$", urlsplit(url or "").path.rstrip("/"))
+    """Board-specific job id from the url path.
+
+    ITViec: trailing number (…/foo-5349). TopCV: last segment (…/slug/2316742.html).
+    """
+    path = urlsplit(url or "").path.rstrip("/")
+    m = re.search(r"(\d+)\s*$", path)
+    if m:
+        return m.group(1)
+    m = re.search(r"/(\d+)\.html?$", path, re.IGNORECASE)
     return m.group(1) if m else ""
 
 

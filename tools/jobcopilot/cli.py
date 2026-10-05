@@ -261,6 +261,9 @@ _SC = [
      "senior full stack developer nodejs"),
     (company_slug, ("Koala Digital, Inc.",), "koala-digital-inc"),
     (extract_external_id, ("https://itviec.com/it-jobs/foo-5349",), "5349"),
+    (extract_external_id, ("https://www.topcv.vn/viec-lam/senior-dev/2316742.html",), "2316742"),
+    (url_canonical, ("https://www.topcv.vn/viec-lam/x/2316742.html?ta_source=JobSearchList_LinkDetail&u_sr_id=abc",),
+     "https://www.topcv.vn/viec-lam/x/2316742.html"),
     (dedupe_key, ("itviec", "5349", "https://itviec.com/x"), "itviec:5349"),
 ]
 
