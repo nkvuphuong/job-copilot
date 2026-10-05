@@ -40,7 +40,7 @@ _HEAD = """<!DOCTYPE html>
 <style>
   :root {{ --ink:#1a1a1a; --muted:#555; --rule:#d9d9d9; --accent:#0f4c81; }}
   * {{ box-sizing: border-box; }}
-  body {{ margin:0; color:var(--ink); font:13.5px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:#f3f3f3; }}
+  body {{ margin:0; color:var(--ink); font:13.5px/1.5 Arial,Calibri,Helvetica,Georgia,sans-serif; background:#f3f3f3; }}
   .page {{ width:210mm; min-height:297mm; margin:12px auto; padding:16mm 15mm; background:#fff; }}
   header {{ border-bottom:2px solid var(--accent); padding-bottom:10px; margin-bottom:14px; }}
   h1 {{ font-size:24px; margin:0 0 2px; letter-spacing:.3px; }}

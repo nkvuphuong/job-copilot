@@ -21,6 +21,7 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 - `templates/cv-template-en.md` / `templates/cv-template-vn.md` — skeleton khi generate
 - `templates/cv-print.html` — bản A4 in PDF bằng trình duyệt
 - `scripts/render_cv.py` — render `cv/*.md` → HTML in PDF (tự strip `<!-- evidence_id -->`)
+- `scripts/export_cv.py` — `cv/*.md` → PDF text-based (Chrome headless); `--docx` xuất thêm DOCX (pandoc)
 - `scripts/selfcheck_cv.py` — kiểm trung thực: evidence_id + skill claim phải map về bullet/`confirmed: true` trong `profile.md`; Summary warn-only
 
 ## Bước 0 — Routing
@@ -58,8 +59,8 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
    - Bullet = Action + tech + kết quả; chỗ thiếu số để `[cần xác nhận: ...]`, không tự điền.
 5. **Self-score** bằng `references/rubric.md` → báo điểm + danh sách chỗ cần user xác nhận.
    - **Self-check trung thực:** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail = có evidence_id lạ hoặc skill claim vượt bullet/`confirmed: true` trong `profile.md` → sửa trước khi báo user. Summary metric là warn-only (thêm `--strict-summary` để fail).
-6. **Output**: hỏi đường dẫn, mặc định `./cv/<Ten>-<Role>-2026.md`. Render HTML in PDF:
-   `python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md` (batch: `cv/*.md`), rồi `Cmd+P` → Save as PDF (A4).
+6. **Output**: hỏi đường dẫn, mặc định `./cv/<Ten>-<Role>-2026.md`. Render HTML/PDF:
+   `python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md` (batch: `cv/*.md`) → `cv/<file>.pdf` text-based (Chrome headless). Thêm `--docx` nếu JD yêu cầu Word. (Chỉ cần `render_cv.py` khi muốn xem HTML trong trình duyệt.)
 7. Nhắc: nộp bản PDF; xin referral **trước khi** apply nếu chưa nộp.
 
 ## Workflow REVIEW
