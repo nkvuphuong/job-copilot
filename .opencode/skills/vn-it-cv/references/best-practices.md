@@ -17,11 +17,12 @@ Chắt lọc từ ByteByteGo *How to Write a Good Resume* (Gergely Orosz) — c�
 - **Số liệu chỉ ghi số thật**. Thiếu → hỏi user hoặc đánh dấu `[cần xác nhận]`; tuyệt đối không bịa.
 
 ## 3. Format
-- **PDF** khi nộp (tránh vỡ format Word; tránh bị agency bóc contact).
+- **PDF** khi nộp (tránh vỡ format Word; tránh bị agency bóc contact). Chi tiết luật parse-safe: `cv-format-ats.md`.
 - **1 trang** fresher/junior; **≤2 trang** cho mid/senior+.
 - Thứ tự tham khảo: Header/contact → Summary → Skills → Experience → Projects (fresher: Projects trước) → Education/Certs.
 - "ATS-compatible resume" là buzzword — ATS phổ biến không auto-reject, không cần mẹo/dịch vụ "ATS optimization". Thứ thực sự hiệu quả là tailor theo JD.
 - Chuẩn theo loại công ty VN (ảnh/DOB/ngôn ngữ): xem `vn-market.md` mục 1.
+- Nguồn đối chiếu chéo (r/EngineeringResumes, ByteByteGo, ATS guides 2026) + tool upload: xem `review-sources.md`.
 
 ## 4. Chiến lược apply (ngoài CV)
 - **Referral là đòn bẩy lớn nhất**: xin referral **trước khi nộp** — nộp xong vào ATS thường không refer được nữa. Strong referral (người đã làm việc với bạn) mạnh hơn blind referral.
