@@ -34,7 +34,7 @@ _NOISE = {
     "daily", "drivers", "etc", "ai", "data", "cloud", "devops",
     "architecture", "leadership", "messaging", "infra", "systems",
     "queues", "apis", "engineering", "delivery", "ownership", "mentoring",
-    "large", "scale", "distributed",
+    "large", "scale", "distributed", "practices",
 }
 # tokens allowed even without a literal profile match (common resume vocabulary)
 _ALLOW = {"agile", "microservices"}
