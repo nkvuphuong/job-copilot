@@ -25,6 +25,11 @@ UI drawer khối Interview Prep (đổi `prep_status`, log round, xem cue card),
 API `GET /api/prep/<job_id>` + `POST /api/jobs/<id>/prep|prep-round`. E2E phủ.
 `stage` derive thêm mốc `prep`.
 
+**UI v1.2 — Việt hoá + render HTML ✅ xong:**
+UI nhãn tiếng Việt; file nội dung (.md) hiển thị qua HTML render on-the-fly
+(`tools/jobcopilot/render.py`, endpoint `?format=html` cho CV/prep/JD) mở ở tab
+mới — `.md` vẫn phục vụ agent (mặc định). Chip giai đoạn dịch nhãn (giữ giá trị gốc).
+
 **B5.2 — offers (chưa làm):**
 
 - **Schema cần thêm:** `offers` (job_id, base, bonus, equity, benefits_json,

@@ -14,6 +14,7 @@ PORT=8779
 HOST=127.0.0.1
 CLI_REL="tools/jobcopilot/cli.py"
 SERVER_REL="tools/jobcopilot/server.py"
+RENDER_MOD_REL="tools/jobcopilot/render.py"
 SELFCHECK_CV_REL=".opencode/skills/vn-it-cv/scripts/selfcheck_cv.py"
 RENDER_CV_REL=".opencode/skills/vn-it-cv/scripts/render_cv.py"
 
@@ -207,6 +208,18 @@ run_suite() {
   assert_eq "prep cue card served" "$(curl -s "http://$HOST:$PORT/api/prep/2026-10-import-acme-be" | python3 -c 'import sys,json;print(1 if json.load(sys.stdin).get("markdown") else 0)')" "1"
   assert_eq "prep stage derived" "$(curl -s "http://$HOST:$PORT/api/jobs/2026-10-import-acme-be" | python3 -c 'import sys,json;print(1 if "prep" in json.load(sys.stdin)["stage"] else 0)')" "1"
   assert_eq "prep unknown -> 404" "$(curl -s -o /dev/null -w '%{http_code}' "http://$HOST:$PORT/api/prep/nope")" "404"
+
+  # render on-the-fly (?format=html) for CV / prep / raw JD
+  python3 "$RENDER_MOD_REL" >/dev/null; assert_true "render selfcheck" $?
+  for kind in cv prep jobs; do
+    local hid=2026-10-import-acme-be
+    [ "$kind" = "cv" ] && hid="$SJID"   # only this job has a CV
+    local h; h=$(curl -s "http://$HOST:$PORT/api/$kind/$hid?format=html")
+    echo "$h" | head -c 15 | grep -q 'doctype' && ok "html $kind has doctype" || bad "html $kind missing doctype"
+    echo "$h" | grep -q '<!--' && bad "html $kind leaked comment" || ok "html $kind no comment leak"
+  done
+  # default (no format) stays markdown for the agent
+  assert_eq "cv default stays md" "$(curl -s "http://$HOST:$PORT/api/cv/$SJID" | python3 -c 'import sys,json;print(1 if json.load(sys.stdin).get("markdown") else 0)')" "1"
 
   kill "$SRV_PID" 2>/dev/null; wait "$SRV_PID" 2>/dev/null; SRV_PID=""
 

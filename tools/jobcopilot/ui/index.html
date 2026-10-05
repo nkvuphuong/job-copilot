@@ -40,21 +40,21 @@
 <body>
 <header>
   <h1>job-copilot</h1>
-  <span class="mut" id="sub">local · DB là nguồn state</span>
+  <span class="mut" id="sub">chạy local · DB là nguồn trạng thái</span>
 </header>
 <main>
   <div class="cards" id="funnel"></div>
   <div class="bar">
-    <select id="f-status"><option value="">status: all</option></select>
-    <select id="f-source"><option value="">source: all</option></select>
-    <select id="f-seniority"><option value="">seniority: all</option></select>
-    <button id="refresh">refresh</button>
+    <select id="f-status"><option value="">trạng thái: tất cả</option></select>
+    <select id="f-source"><option value="">nguồn: tất cả</option></select>
+    <select id="f-seniority"><option value="">cấp bậc: tất cả</option></select>
+    <button id="refresh">Tải lại</button>
     <span class="mut" id="due"></span>
   </div>
   <table>
     <thead><tr>
-      <th>Company / title</th><th>Source</th><th>Seniority</th><th>Score</th>
-      <th>Stage</th><th>Status</th><th>Follow-up</th><th>Next action</th>
+      <th>Công ty / vị trí</th><th>Nguồn</th><th>Cấp bậc</th><th>Điểm</th>
+      <th>Giai đoạn</th><th>Trạng thái</th><th>Nhắc lại</th><th>Việc kế</th>
     </tr></thead>
     <tbody id="rows"></tbody>
   </table>
@@ -67,36 +67,44 @@
 
 <script>
 const STATUSES = ["saved","applied","screen","tech","onsite","offer","rejected","ghosted","closed"];
+const STATUS_LABEL = { saved:"Đã lưu", applied:"Đã nộp", screen:"Sàng lọc", tech:"PV kỹ thuật",
+  onsite:"PV onsite", offer:"Offer", rejected:"Từ chối", ghosted:"Bị bơ", closed:"Đóng" };
 const STAGES = ["scanned","scored","cv","prep","applied"];
+const STAGE_LABEL = { scanned:"đã quét", scored:"đã chấm", cv:"có CV", prep:"có prep", applied:"đã nộp" };
+const PREP_STATUSES = ["draft","ready","done"];
+const PREP_LABEL = { draft:"nháp", ready:"sẵn sàng", done:"xong" };
 const $ = s => document.querySelector(s);
 const esc = s => (s ?? "").toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const addDays = (iso,n)=>{const d=new Date(iso);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
 const today = () => new Date().toISOString().slice(0,10);
 
-function opts(sel, values) { for (const v of values){const o=document.createElement("option");o.value=v;o.textContent=v;sel.append(o);} }
+function opts(sel, values, label) {
+  for (const v of values) { const o=document.createElement("option"); o.value=v; o.textContent=(label&&label[v])||v; sel.append(o); }
+}
 async function api(path, body){
   const r = await fetch(path, body ? {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)} : {});
   return r.json();
 }
-const stageChips = st => STAGES.map(s => `<span class="chip ${st.includes(s)?"on":""}">${s}</span>`).join("");
+const stageChips = st => STAGES.map(s => `<span class="chip ${st.includes(s)?"on":""}">${STAGE_LABEL[s]}</span>`).join("");
+const openHtml = (kind, id) => window.open(`/api/${kind}/${encodeURIComponent(id)}?format=html`, "_blank", "noopener");
 
 async function load() {
   const q = new URLSearchParams();
   for (const k of ["status","source","seniority"]) { const v=$("#f-"+k).value; if(v) q.set(k,v); }
   const [rep, jobs] = await Promise.all([api("/api/report"), api("/api/jobs?"+q)]);
-  $("#funnel").innerHTML = STATUSES.map(s => `<div class="card"><b>${rep.funnel[s]||0}</b><span>${s}</span></div>`).join("");
+  $("#funnel").innerHTML = STATUSES.map(s => `<div class="card"><b>${rep.funnel[s]||0}</b><span>${STATUS_LABEL[s]}</span></div>`).join("");
   const due = rep.followup_due||[];
-  $("#due").textContent = due.length ? `⚠ ${due.length} follow-up due: ${due.map(d=>d.id.slice(-24)).join(", ")}` : "";
+  $("#due").textContent = due.length ? `⚠ ${due.length} việc cần nhắc: ${due.map(d=>d.id.slice(-24)).join(", ")}` : "";
   $("#rows").innerHTML = jobs.map(j => `
     <tr data-id="${esc(j.id)}">
       <td><b>${esc(j.company)}</b><div class="mut">${esc(j.title)}</div>
-          ${j.duplicate_of ? `<span class="tag dup">dup of ${esc(j.duplicate_of.slice(-24))}</span>` : ""}</td>
+          ${j.duplicate_of ? `<span class="tag dup">trùng với ${esc(j.duplicate_of.slice(-24))}</span>` : ""}</td>
       <td><span class="tag">${esc(j.source)}</span></td>
       <td>${esc(j.seniority)}</td>
       <td class="score">${j.match_score ?? ""}</td>
       <td>${stageChips(j.stage||[])}</td>
       <td><select data-act="status" data-id="${esc(j.id)}">
-        ${STATUSES.map(s=>`<option ${s===j.status?"selected":""}>${s}</option>`).join("")}
+        ${STATUSES.map(s=>`<option value="${s}" ${s===j.status?"selected":""}>${STATUS_LABEL[s]}</option>`).join("")}
       </select></td>
       <td>${esc(j.followup_at)}</td>
       <td class="mut">${esc(j.next_action)}</td>
@@ -110,64 +118,44 @@ async function openDetail(id) {
   $("#drawer-body").innerHTML = `
     <h2>${esc(d.company)}</h2>
     <div class="mut">${esc(d.title)}</div>
-    <div class="row">${stageChips(d.stage||[])} <span class="tag">${esc(d.status)}</span></div>
-    <div class="row"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)||"(no url)"} ↗</a></div>
-    <h3>Score</h3>
+    <div class="row">${stageChips(d.stage||[])} <span class="tag">${STATUS_LABEL[d.status]||esc(d.status)}</span></div>
+    <div class="row"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)||"(không có link)"} ↗</a></div>
+    <h3>Điểm</h3>
     <div><b class="score">${d.match_score ?? ""}</b> ${esc(d.score_rationale)}</div>
-    ${gap.length ? `<div class="row">gap: ${gap.map(g=>`<span class="chip">${esc(g)}</span>`).join("")}</div>` : ""}
-    ${d.notes ? `<div class="row"><span class="kv">notes</span>${esc(d.notes)}</div>` : ""}
-    <div class="row"><span class="kv">location</span>${esc(d.location)} · ${esc(d.remote)}</div>
-    <div class="row"><span class="kv">applied</span>${esc(d.applied_at)} ${d.apply_method?`(${esc(d.apply_method)})`:""}</div>
+    ${gap.length ? `<div class="row">thiếu: ${gap.map(g=>`<span class="chip">${esc(g)}</span>`).join("")}</div>` : ""}
+    ${d.notes ? `<div class="row"><span class="kv">ghi chú</span>${esc(d.notes)}</div>` : ""}
+    <div class="row"><span class="kv">địa điểm</span>${esc(d.location)} · ${esc(d.remote)}</div>
+    <div class="row"><span class="kv">đã nộp</span>${esc(d.applied_at)} ${d.apply_method?`(${esc(d.apply_method)})`:""}</div>
     <h3>CV (${d.cvs.length})</h3>
-    ${d.cvs.length ? d.cvs.map(c=>`<div class="row"><button data-cv="${esc(d.id)}">view</button> ${esc(c.path)} <span class="mut">${c.is_current?"current":""}</span></div>`).join("")
-      : `<div class="mut">no CV yet</div>`}
-    ${d.prep_path ? `<h3>Prep</h3><div>${esc(d.prep_path)}</div>` : ""}
-    <h3>Interview Prep</h3>
+    ${d.cvs.length ? d.cvs.map(c=>`<div class="row"><button data-open="cv" data-id="${esc(d.id)}">Mở</button> ${esc(c.path)} <span class="mut">${c.is_current?"hiện tại":""}</span></div>`).join("")
+      : `<div class="mut">chưa có CV</div>`}
+    <h3>Chuẩn bị phỏng vấn</h3>
     ${prepBlock(d)}
-    <h3>Raw JD</h3>
-    <pre>${esc(d.raw_jd) || "(missing)"}</pre>
-    <div id="cv-view"></div>
-    <div id="prep-view"></div>`;
+    <h3>JD gốc</h3>
+    <div class="row"><button data-open="jobs" data-id="${esc(d.id)}">Mở JD</button> <span class="mut">${esc(d.url)}</span></div>`;
   $("#drawer").classList.add("open");
 }
 
-const PREP_STATUSES = ["draft","ready","done"];
 function prepBlock(d) {
   const p = d.prep;
-  if (!p && !d.prep_path) return `<div class="mut">no prep yet</div>`;
+  if (!p && !d.prep_path) return `<div class="mut">chưa có prep</div>`;
   const st = p ? p.prep_status : "draft";
   const rounds = p ? (p.rounds || []) : [];
   return `
     <div class="row">
-      <span class="kv">status</span>
+      <span class="kv">trạng thái</span>
       <select data-act="prep" data-id="${esc(d.id)}">
-        ${PREP_STATUSES.map(s=>`<option ${s===st?"selected":""}>${s}</option>`).join("")}
+        ${PREP_STATUSES.map(s=>`<option value="${s}" ${s===st?"selected":""}>${PREP_LABEL[s]}</option>`).join("")}
       </select>
-      ${d.prep_path ? `<button data-prep="${esc(d.id)}">view cue card</button>` : `<span class="mut">no cue card file</span>`}
+      ${d.prep_path ? `<button data-open="prep" data-id="${esc(d.id)}">Mở cue card</button>` : `<span class="mut">chưa có file cue card</span>`}
     </div>
-    ${p ? `<div class="row"><span class="kv">rounds</span>${rounds.length} logged</div>
+    ${p ? `<div class="row"><span class="kv">số vòng</span>${rounds.length} đã ghi</div>
       ${rounds.map(r=>`<div class="row mut">${esc(r.at)} · ${esc(r.round_type)} — ${esc(r.went_well||r.notes||"")}</div>`).join("")}` : ""}
     <div class="row">
-      <input id="pr-type" placeholder="round (mock/tech)" style="width:130px">
-      <input id="pr-fix" placeholder="what to fix" style="flex:1">
-      <button data-prepround="${esc(d.id)}">+ round</button>
+      <input id="pr-type" placeholder="vòng (mock/tech)" style="width:140px">
+      <input id="pr-fix" placeholder="cần sửa gì" style="flex:1">
+      <button data-prepround="${esc(d.id)}">+ vòng</button>
     </div>`;
-}
-
-async function openPrep(id) {
-  const c = await api(`/api/prep/${encodeURIComponent(id)}`);
-  $("#prep-view").innerHTML = c.markdown
-    ? `<h3>Cue card · ${esc(c.path)}</h3><pre>${esc(c.markdown)}</pre>`
-    : `<h3>Cue card</h3><div class="mut">${esc(c.error||"not found")}</div>`;
-  $("#prep-view").scrollIntoView({behavior:"smooth"});
-}
-
-async function openCv(id) {
-  const c = await api(`/api/cv/${encodeURIComponent(id)}`);
-  $("#cv-view").innerHTML = c.markdown
-    ? `<h3>CV · ${esc(c.path)}</h3><pre>${esc(c.markdown)}</pre>`
-    : `<h3>CV</h3><div class="mut">${esc(c.error||"not found")}</div>`;
-  $("#cv-view").scrollIntoView({behavior:"smooth"});
 }
 
 document.addEventListener("change", async e => {
@@ -184,10 +172,8 @@ document.addEventListener("change", async e => {
   }
 });
 document.addEventListener("click", async e => {
-  const cvBtn = e.target.closest("[data-cv]");
-  if (cvBtn) { e.stopPropagation(); return openCv(cvBtn.dataset.cv); }
-  const prepBtn = e.target.closest("[data-prep]");
-  if (prepBtn) { e.stopPropagation(); return openPrep(prepBtn.dataset.prep); }
+  const openBtn = e.target.closest("[data-open]");
+  if (openBtn) { e.stopPropagation(); return openHtml(openBtn.dataset.open, openBtn.dataset.id); }
   const roundBtn = e.target.closest("[data-prepround]");
   if (roundBtn) {
     e.stopPropagation();
@@ -203,7 +189,7 @@ document.addEventListener("click", async e => {
 });
 $("#refresh").onclick = load;
 ["status","source","seniority"].forEach(k => $(`#f-${k}`).onchange = load);
-opts($("#f-status"), STATUSES);
+opts($("#f-status"), STATUSES, STATUS_LABEL);
 opts($("#f-source"), ["itviec","linkedin","topcv","vietnamworks","import","referral"]);
 opts($("#f-seniority"), ["intern","fresher","junior","mid","senior","lead","manager"]);
 load();

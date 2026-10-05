@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import db  # noqa: E402
+import render  # noqa: E402
 
 UI = Path(__file__).resolve().parent / "ui" / "index.html"
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -90,6 +91,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_html(self, html_text: str, code=200):
+        body = html_text.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def _read_json(self):
         n = int(self.headers.get("Content-Length") or 0)
         return json.loads(self.rfile.read(n) or b"{}")
@@ -108,17 +117,24 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(db.report(self._conn()))
         if u.path == "/api/jobs":
             return self._send(_jobs(self._conn(), parse_qs(u.query)))
+        q = parse_qs(u.query)
+        want_html = (q.get("format") or [""])[0] == "html"
         parts = [p for p in u.path.split("/") if p]  # api jobs <id> | api cv <id>
         if len(parts) == 3 and parts[:2] == ["api", "jobs"]:
             d = _job_detail(self._conn(), parts[2])
-            return self._send(d) if d else self._send({"error": "not found"}, 404)
+            if not d:
+                return self._send({"error": "not found"}, 404)
+            if want_html:
+                return self._send_html(render.to_html(
+                    d.get("raw_jd", ""), f"{d.get('title','')} — {d.get('company','')}"))
+            return self._send(d)
         if len(parts) == 3 and parts[:2] == ["api", "cv"]:
-            return self._cv_content(parts[2])
+            return self._cv_content(parts[2], want_html)
         if len(parts) == 3 and parts[:2] == ["api", "prep"]:
-            return self._prep_content(parts[2])
+            return self._prep_content(parts[2], want_html)
         self._send({"error": "not found"}, 404)
 
-    def _prep_content(self, job_id: str):
+    def _prep_content(self, job_id: str, want_html: bool = False):
         row = self._conn().execute("SELECT path FROM prep WHERE job_id = ?",
                                    (job_id,)).fetchone()
         default = REPO_ROOT / "prep" / f"{job_id}.md"
@@ -128,9 +144,12 @@ class Handler(BaseHTTPRequestHandler):
         path = (REPO_ROOT / rel).resolve()
         if not str(path).startswith(str(REPO_ROOT) + "/") or not path.exists():
             return self._send({"error": "prep file missing"}, 404)
-        return self._send({"path": rel, "markdown": path.read_text(encoding="utf-8")})
+        md = path.read_text(encoding="utf-8")
+        if want_html:
+            return self._send_html(render.to_html(md, f"Prep · {job_id}"))
+        return self._send({"path": rel, "markdown": md})
 
-    def _cv_content(self, job_id: str):
+    def _cv_content(self, job_id: str, want_html: bool = False):
         conn = self._conn()
         row = conn.execute("SELECT path FROM cv_versions WHERE job_id = ? "
                            "ORDER BY is_current DESC, created_at DESC LIMIT 1",
@@ -140,7 +159,10 @@ class Handler(BaseHTTPRequestHandler):
         path = (REPO_ROOT / row["path"]).resolve()
         if not str(path).startswith(str(REPO_ROOT)) or not path.exists():
             return self._send({"error": "cv file missing"}, 404)
-        return self._send({"path": row["path"], "markdown": path.read_text(encoding="utf-8")})
+        md = path.read_text(encoding="utf-8")
+        if want_html:
+            return self._send_html(render.to_html(md, f"CV · {job_id}"))
+        return self._send({"path": row["path"], "markdown": md})
 
     def do_POST(self):
         u = urlparse(self.path)
