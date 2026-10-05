@@ -131,6 +131,33 @@ def cmd_status(args) -> int:
     return 0
 
 
+def cmd_prep(args) -> int:
+    conn = db.connect(args.db)
+    if args.action == "open":
+        path = args.path or f"prep/{args.job_id}.md"
+        db.open_prep(conn, args.job_id, path)
+        print(_dump({"job_id": args.job_id, "path": path, "prep_status": "draft"}))
+    elif args.action == "status":
+        db.set_prep_status(conn, args.job_id, args.to)
+        print(_dump({"job_id": args.job_id, "prep_status": args.to}))
+    elif args.action == "round-add":
+        rid = db.add_prep_round(conn, args.job_id, args.type, at=args.at,
+                                notes=args.notes or "", went_well=args.went_well or "",
+                                to_fix=args.to_fix or "")
+        print(_dump({"round_id": rid, "job_id": args.job_id, "type": args.type}))
+    elif args.action == "show":
+        p = db.get_prep(conn, args.job_id)
+        print(_dump(p) if p else _dump({"error": "no prep for " + args.job_id}))
+    elif args.action == "list":
+        rows = conn.execute(
+            "SELECT j.id, j.company, j.title, p.prep_status FROM jobs j "
+            "LEFT JOIN prep p ON p.job_id = j.id "
+            "WHERE j.status IN ('applied','screen','tech','onsite','offer') "
+            "ORDER BY j.status, j.id")
+        print(_dump([dict(r) for r in rows]))
+    return 0
+
+
 def cmd_report(args) -> int:
     conn = db.connect(args.db)
     print(_dump(db.report(conn)))
@@ -203,12 +230,22 @@ def main(argv=None) -> int:
 
     sub.add_parser("report", help="funnel + backlog + follow-ups (from DB)")
 
+    p_prep = sub.add_parser("prep", help="interview prep status + mock round log")
+    prep_sub = p_prep.add_subparsers(dest="action", required=True)
+    po = prep_sub.add_parser("open"); po.add_argument("job_id"); po.add_argument("--path")
+    ps = prep_sub.add_parser("status"); ps.add_argument("job_id"); ps.add_argument("--to", required=True)
+    pr = prep_sub.add_parser("round-add"); pr.add_argument("job_id"); pr.add_argument("--type", required=True)
+    pr.add_argument("--at"); pr.add_argument("--notes"); pr.add_argument("--went-well", dest="went_well")
+    pr.add_argument("--to-fix", dest="to_fix")
+    psh = prep_sub.add_parser("show"); psh.add_argument("job_id")
+    prep_sub.add_parser("list")
+
     args = p.parse_args(argv)
     if args.cmd == "run":
         args.action = getattr(args, "action", None)
     table = {"init": cmd_init, "selfcheck": cmd_selfcheck, "import": cmd_import,
              "dedupe-check": cmd_dedupe_check, "add": cmd_add, "run": cmd_run,
-             "status": cmd_status, "report": cmd_report}
+             "status": cmd_status, "report": cmd_report, "prep": cmd_prep}
     try:
         return table[args.cmd](args)
     except (KeyError, ValueError) as e:

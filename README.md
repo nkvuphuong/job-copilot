@@ -53,6 +53,15 @@ Then, in opencode, just talk:
 
 The `job-hunt` and `vn-it-cv` skills are project-local, so **you must run opencode from inside the repo**.
 
+## Tests
+
+```bash
+./scripts/e2e.sh          # dry-run: prints the steps, changes nothing
+./scripts/e2e.sh --run    # full E2E in a throwaway temp clone (DB/CLI/UI + vn-it-cv)
+```
+
+Everything runs in `$TMPDIR/jobcopilot-e2e`; your real data and DB are never touched.
+
 ## Prerequisites
 
 See **[PREREQUISITES.md](PREREQUISITES.md)** — opencode, the `chrome-devtools` MCP, and the `jev` tool for triage.

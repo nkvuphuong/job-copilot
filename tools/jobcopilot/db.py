@@ -57,7 +57,21 @@ CREATE INDEX IF NOT EXISTS idx_jobs_dedupe ON jobs(dedupe_key);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_events_job ON job_events(job_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cv_unique ON cv_versions(job_id, path);
+CREATE TABLE IF NOT EXISTS prep (
+  job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,
+  path TEXT, prep_status TEXT NOT NULL DEFAULT 'draft',
+  rounds_json TEXT, format TEXT, interviewers_json TEXT, sources_json TEXT,
+  updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS prep_rounds (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  at TEXT, round_type TEXT, notes TEXT, went_well TEXT, to_fix TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_prep_rounds_job ON prep_rounds(job_id);
 """
+
+PREP_STATUSES = ("draft", "ready", "done")
 
 
 def connect(path=DEFAULT_DB) -> sqlite3.Connection:
@@ -157,6 +171,72 @@ def add_cv_version(conn, job_id: str, lang: str, path: str, *,
         ).lastrowid
     conn.commit()
     return cid
+
+
+def open_prep(conn, job_id: str, path: str, *, rounds_json: str = "[]",
+              fmt: str = "", interviewers_json: str = "[]",
+              sources_json: str = "[]") -> None:
+    """Register (or refresh) the prep row for a job. Content stays in `path`."""
+    now = date.today().isoformat()
+    conn.execute(
+        "INSERT INTO prep (job_id, path, prep_status, rounds_json, format, "
+        "interviewers_json, sources_json, updated_at) VALUES (?,?, 'draft',?,?,?,?,?) "
+        "ON CONFLICT(job_id) DO UPDATE SET path=excluded.path, rounds_json=excluded.rounds_json, "
+        "format=excluded.format, interviewers_json=excluded.interviewers_json, "
+        "sources_json=excluded.sources_json, updated_at=excluded.updated_at",
+        (job_id, path, rounds_json, fmt, interviewers_json, sources_json, now))
+    conn.commit()
+
+
+def set_prep_status(conn, job_id: str, to: str, *, at: str | None = None) -> None:
+    if to not in PREP_STATUSES:
+        raise ValueError(f"unknown prep_status: {to}")
+    cur = conn.execute("UPDATE prep SET prep_status=?, updated_at=? WHERE job_id=?",
+                       (to, at or date.today().isoformat(), job_id))
+    if cur.rowcount == 0:
+        raise KeyError(job_id)
+    conn.commit()
+
+
+def add_prep_round(conn, job_id: str, round_type: str, *, at: str | None = None,
+                   notes: str = "", went_well: str = "", to_fix: str = "") -> int:
+    at = at or date.today().isoformat()
+    cur = conn.execute(
+        "INSERT INTO prep_rounds (job_id, at, round_type, notes, went_well, to_fix) "
+        "VALUES (?,?,?,?,?,?)", (job_id, at, round_type, notes, went_well, to_fix))
+    conn.commit()
+    return cur.lastrowid
+
+
+def get_prep(conn, job_id: str) -> dict | None:
+    row = conn.execute("SELECT * FROM prep WHERE job_id = ?", (job_id,)).fetchone()
+    if row is None:
+        return None
+    d = dict(row)
+    d["rounds"] = [dict(r) for r in conn.execute(
+        "SELECT * FROM prep_rounds WHERE job_id = ? ORDER BY at, id", (job_id,))]
+    return d
+
+
+_APPLIED_STATUSES = {"applied", "screen", "tech", "onsite", "offer"}
+
+
+def stage_of(row, has_cv: bool, has_prep: bool) -> list[str]:
+    """Agent-side pipeline stage, DERIVED from existing data (no stage column).
+
+    Returns the ordered list of stages this job has reached. Always includes
+    'scanned' (the row exists); later stages only if their artifact exists.
+    """
+    stages = ["scanned"]
+    if (row["match_score"] or 0) > 0 or (row["verdict"] or ""):
+        stages.append("scored")
+    if has_cv:
+        stages.append("cv")
+    if has_prep:
+        stages.append("prep")
+    if (row["status"] or "") in _APPLIED_STATUSES:
+        stages.append("applied")
+    return stages
 
 
 def report(conn) -> dict:

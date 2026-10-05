@@ -55,5 +55,6 @@ Spec: `docs/spec-db-ui.md` · Plan: `tasks/plan.md`
 **Verify:** `git check-ignore jobcopilot.db jobs/.backup/x.md` → in đường dẫn. ✅
 
 ## CP-C — Done
-- [x] Success Criteria trong `docs/spec-db-ui.md` đạt (xem `code-review-and-quality`).
-- [ ] Chạy `code-review-and-quality` trước khi báo hoàn thành. ← đang chạy
+- [x] Success Criteria trong `docs/spec-db-ui.md` đạt.
+- [x] `code-review-and-quality` (1 Required đã sửa).
+- [x] E2E: `scripts/e2e.sh --run` → **45 passed, 0 failed** (DB/CLI/UI + vn-it-cv).

@@ -136,7 +136,58 @@ không ORM; mọi thao tác ghi state đi qua `db.py` (CLI và server đều g�
 2. `jobs/<id>.md` sau migrate: thêm vài dòng header hiển thị `title` / `company` / `url`, rồi raw JD.
 3. 13 job migrate: `first_run_id = NULL` (không có run gốc).
 
-## Open Questions
+---
+
+# Phase B5.1 — Interview Prep vào DB + UI (delta)
+
+> v1 (bước 1–4) xong. Bước 5–6 làm từng phần; B5.1 = **prep trước** (offers ở B5.2).
+
+## Objective
+
+Đưa interview prep từ file thuần sang DB: **nội dung cue card vẫn ở `prep/<job-id>.md`**
+(agent sở hữu), còn **trạng thái prep** (`prep_status`, danh sách vòng + kết quả mock)
+nằm trong DB (người sở hữu, xem/ghi trên UI). Với các JD đã `applied`.
+
+## Data Model mới (2 bảng)
+
+| Bảng | Vai trò | Cột chính |
+|---|---|---|
+| `prep` | 1 cue card / job | `job_id` PK FK, `path`, `prep_status`(draft/ready/done), `rounds_json`, `format`, `interviewers_json`, `sources_json`, `updated_at` |
+| `prep_rounds` | log từng vòng (mock/thật) | `id` PK, `job_id` FK, `at`, `round_type`(screen/tech/onsite/manager/mock), `notes`, `went_well`, `to_fix` |
+
+`prep_status` vocab: `draft|ready|done`. `stage` derive thêm mốc `prep` khi có row `prep`.
+
+## Commands mới
+
+```bash
+jc prep open <job_id> [--path prep/<job_id>.md]   # đăng ký/tạo row prep (status draft)
+jc prep status <job_id> --to ready                # draft|ready|done
+jc prep round-add <job_id> --type mock --at <date> --went-well '…' --to-fix '…'
+jc prep list                                      # jobs applied, prep_status
+jc prep show <job_id>                             # JSON: prep + rounds
+```
+
+## UI mới
+
+- Filter `status=applied` (đã có) + cột/badge **Prep** (draft/ready/done) trong list.
+- Drawer job: khối **Interview Prep** — nút đổi `prep_status`, danh sách rounds, nút "view cue card" (đọc `prep/<job-id>.md` qua `GET /api/prep/<job_id>`).
+- Không auto-skip; không bịa nội dung — cue card là file do agent viết.
+
+## Success Criteria (B5.1)
+
+1. `jc init` thêm 2 bảng mới mà không phá bảng cũ (idempotent).
+2. Với 2 job `applied` (GFG, Rakus): tạo cue card `prep/<job-id>.md` (agent) + `jc prep open` → row `prep` status `draft`.
+3. UI list hiện badge Prep; drawer đổi `prep_status` `draft→ready→done` (ghi `updated_at`).
+4. `jc prep round-add … --type mock` lưu 1 row `prep_rounds`; UI drawer hiện round đó.
+5. `stage` của job có prep = `… ,prep`.
+6. E2E `scripts/e2e.sh --run` phủ: tạo prep, đổi status, thêm round, view cue card, 404 khi thiếu.
+
+## Boundaries (B5.1)
+
+- **Never:** nhét nội dung cue card vào DB (chỉ path); bịa nội dung prep; auto-apply.
+- **Ask first:** đổi vocab `prep_status`; thêm bảng khác ngoài `prep`/`prep_rounds`.
+
+## Open Questions (B5.1)
 
 Không còn.
 ```

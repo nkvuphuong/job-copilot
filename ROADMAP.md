@@ -19,20 +19,20 @@ tiếp mà không phải nhớ. Mỗi mục có acceptance criteria riêng.
 
 ### B5. cv_versions / prep / offers vào DB + UI
 
-Mục tiêu: đưa các bảng đã khai báo sẵn (`cv_versions`, `prep`, `prep_rounds`,
-`offers`) vào dùng thật, thay vì chỉ ghi file như v1.
+**B5.1 — prep ✅ xong** (spec: `docs/spec-db-ui.md` mục "Phase B5.1"):
+bảng `prep` + `prep_rounds`, CLI `prep open|status|round-add|show|list`,
+UI drawer khối Interview Prep (đổi `prep_status`, log round, xem cue card),
+API `GET /api/prep/<job_id>` + `POST /api/jobs/<id>/prep|prep-round`. E2E phủ.
+`stage` derive thêm mốc `prep`.
 
-- **Schema cần thêm:** `prep` (job_id, path, prep_status), `prep_rounds` (prep_id,
-  round_type, at, notes), `offers` (job_id, base, bonus, equity, benefits_json,
+**B5.2 — offers (chưa làm):**
+
+- **Schema cần thêm:** `offers` (job_id, base, bonus, equity, benefits_json,
   level, deadline, score_json, status, path).
-- **CLI cần thêm:** `cv-version add/list`, `prep open|status`, `prep round-log`,
-  `offer add|score`.
-- **UI cần thêm:** tab Prep (cue card link + prep_status + mock log), tab Offers
-  (scorecard + deadline + decision), CV version list theo job.
-- **Acceptance:** tạo prep cho 1 job → `prep_status` đổi được trên UI; log 1 mock
-  round → lưu `prep_rounds`; tạo offer → scorecard tính theo trọng số Targeting
-  trong `profile.md`.
-- **Phụ thuộc:** v1 xong (DB + UI chạy).
+- **CLI cần thêm:** `offer add|score`.
+- **UI cần thêm:** tab Offers (scorecard + deadline + decision).
+- **Acceptance:** tạo offer → scorecard tính theo trọng số Targeting trong `profile.md`.
+- **Phụ thuộc:** B5.1 xong.
 
 ### B6. Onboard checklist + archive + Loop
 
