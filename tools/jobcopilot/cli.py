@@ -6,8 +6,11 @@ Content stays in files; lifecycle/identity/run live here.
 from __future__ import annotations
 
 import argparse
+import csv
+import io
 import json
 import sys
+import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -164,6 +167,91 @@ def cmd_report(args) -> int:
     return 0
 
 
+def _export_rows(conn) -> dict:
+    return db.export_data(conn)
+
+
+def _write_csv_zip(payload: dict, out: str) -> None:
+    """One CSV per table inside a single .zip (stdlib csv + zipfile)."""
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for table, rows in payload["tables"].items():
+            buf = io.StringIO()
+            cols = list(rows[0]) if rows else []
+            w = csv.writer(buf)
+            w.writerow(cols)
+            for r in rows:
+                w.writerow(["" if r.get(c) is None else r.get(c) for c in cols])
+            z.writestr(f"{table}.csv", buf.getvalue())
+        z.writestr("_meta.json", _dump(
+            {"schema_version": payload["schema_version"],
+             "exported_at": payload["exported_at"], "counts": payload["counts"]}))
+
+
+def _export_md(conn) -> str:
+    rep = db.report(conn)
+    lines = ["# job-copilot export", "",
+             f"Funnel: " + " · ".join(f"{k}={v}" for k, v in rep["funnel"].items() if v),
+             f"Backlog (chưa nộp): {rep['backlog']}", ""]
+    rows = conn.execute(
+        "SELECT id, status, company, title, match_score, followup_at FROM jobs "
+        "ORDER BY match_score DESC, id").fetchall()
+    lines += ["| id | status | company | title | score | follow-up |",
+              "|---|---|---|---|---|---|"]
+    for r in rows:
+        lines.append("| {} | {} | {} | {} | {} | {} |".format(
+            r["id"], r["status"], r["company"], r["title"],
+            r["match_score"] or "", r["followup_at"] or ""))
+    due = rep["followup_due"]
+    if due:
+        lines += ["", "## Follow-up due", ""]
+        lines += [f"- {d['id']} — {d['company']} ({d['followup_at']})" for d in due]
+    return "\n".join(lines) + "\n"
+
+
+def cmd_export(args) -> int:
+    conn = db.connect(args.db)
+    if args.format == "md":
+        text = _export_md(conn)
+        if args.out:
+            Path(args.out).write_text(text, encoding="utf-8")
+            print(_dump({"status": "written", "format": "md", "out": args.out}))
+        else:
+            sys.stdout.write(text)
+        return 0
+    payload = _export_rows(conn)
+    if args.format == "csv":
+        if not args.out:
+            print("error: --format csv needs --out <file.zip>", file=sys.stderr)
+            return 2
+        _write_csv_zip(payload, args.out)
+        print(_dump({"status": "written", "format": "csv", "out": args.out,
+                     "counts": payload["counts"]}))
+        return 0
+    text = _dump(payload)
+    if args.out:
+        Path(args.out).write_text(text, encoding="utf-8")
+        print(_dump({"status": "written", "format": "json", "out": args.out,
+                     "counts": payload["counts"]}))
+    else:
+        print(text)
+    return 0
+
+
+def cmd_restore(args) -> int:
+    payload = json.loads(Path(args.infile).read_text(encoding="utf-8"))
+    conn = db.connect(args.into)
+    db.init_schema(conn)
+    loaded = db.restore_data(conn, payload)
+    print(_dump({"status": "restored", "into": args.into, "loaded": loaded}))
+    return 0
+
+
+def cmd_backup(args) -> int:
+    dst = db.backup_db(args.db, args.out)
+    print(_dump({"status": "backed-up", "out": str(dst)}))
+    return 0
+
+
 # --- selfcheck: smallest runnable check for non-trivial logic (identity/dedupe) ---
 _SC = [
     (url_canonical, ("https://ITViec.com/it-jobs/foo-5349?utm_source=x#apply",),
@@ -240,12 +328,26 @@ def main(argv=None) -> int:
     psh = prep_sub.add_parser("show"); psh.add_argument("job_id")
     prep_sub.add_parser("list")
 
+    p_ex = sub.add_parser("export", help="dump state: json (round-trip) | csv (zip) | md")
+    p_ex.add_argument("--format", choices=["json", "csv", "md"], default="json")
+    p_ex.add_argument("--out", help="output file (required for csv)")
+
+    p_rs = sub.add_parser("restore", help="load a JSON export into a DB")
+    p_rs.add_argument("--in", dest="infile", required=True)
+    p_rs.add_argument("--into", default=None, help="target DB (default jobcopilot-restore.db)")
+
+    p_bk = sub.add_parser("backup", help="online binary copy of the DB")
+    p_bk.add_argument("--out", default=None)
+
     args = p.parse_args(argv)
     if args.cmd == "run":
         args.action = getattr(args, "action", None)
+    if args.cmd == "restore" and not args.into:
+        args.into = str(db.REPO_ROOT / "jobcopilot-restore.db")
     table = {"init": cmd_init, "selfcheck": cmd_selfcheck, "import": cmd_import,
              "dedupe-check": cmd_dedupe_check, "add": cmd_add, "run": cmd_run,
-             "status": cmd_status, "report": cmd_report, "prep": cmd_prep}
+             "status": cmd_status, "report": cmd_report, "prep": cmd_prep,
+             "export": cmd_export, "restore": cmd_restore, "backup": cmd_backup}
     try:
         return table[args.cmd](args)
     except (KeyError, ValueError) as e:

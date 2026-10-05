@@ -46,10 +46,15 @@ mới — `.md` vẫn phục vụ agent (mặc định). Chip giai đoạn dịc
 - **Acceptance:** đánh dấu accepted offer → sinh checklist; archive không xoá
   dữ liệu, chỉ đổi `status: closed`.
 
-### B7. Export / backup DB
+### B7. Export / backup DB ✅ xong
 
-- Lệnh `cli.py export` (JSON/markdown) và `cli.py backup`.
-- Acceptance: export ra JSON round-trip được (import lại không mất state).
+- `cli.py export --format json|csv|md [--out]`: json round-trip được;
+  csv = 1 `.zip` mỗi bảng 1 file (`_meta.json` kèm counts); md = funnel + bảng job.
+- `cli.py restore --in <json> [--into <db>]` — `INSERT OR REPLACE` theo thứ tự FK,
+  chỉ ghi DB, không đụng `jobs/*.md`. Acceptance đạt: restore → report + row count
+  mọi bảng khớp.
+- `cli.py backup [--out]` — `sqlite3.backup()` online (an toàn khi DB đang mở).
+- E2E P5b phủ. `SCHEMA_VERSION` trong `db.py`.
 
 ## Ghi chú kiến trúc — Docker / chia sẻ repo
 

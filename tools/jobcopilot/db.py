@@ -7,6 +7,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DB = REPO_ROOT / "jobcopilot.db"
+SCHEMA_VERSION = 1
 
 STATUSES = ("saved", "applied", "screen", "tech", "onsite",
             "offer", "rejected", "ghosted", "closed")
@@ -255,3 +256,58 @@ def report(conn) -> dict:
     ).fetchall()
     return {"funnel": funnel, "backlog": backlog,
             "followup_due": [dict(r) for r in due]}
+
+
+# --- B7: export / restore / backup -----------------------------------------
+# FK-safe restore order: parents before children.
+TABLE_ORDER = ("runs", "jobs", "cv_versions", "prep",
+               "job_events", "prep_rounds", "run_items")
+
+
+def export_data(conn) -> dict:
+    """Full state dump, round-trippable by restore_data(). Reads only."""
+    from datetime import datetime
+    tables = {t: [dict(r) for r in conn.execute(f"SELECT * FROM {t}")]
+              for t in TABLE_ORDER}
+    return {"schema_version": SCHEMA_VERSION,
+            "exported_at": datetime.now().isoformat(timespec="seconds"),
+            "counts": {t: len(rows) for t, rows in tables.items()},
+            "tables": tables}
+
+
+def restore_data(conn, payload: dict) -> dict:
+    """Load an export_data() payload. INSERT OR REPLACE, parents first.
+
+    Never touches content files (`jobs/*.md`, `cv/*`) — DB state only.
+    """
+    if not isinstance(payload, dict) or "tables" not in payload:
+        raise ValueError("not an export payload (missing 'tables')")
+    ver = payload.get("schema_version")
+    if ver is not None and ver > SCHEMA_VERSION:
+        raise ValueError(f"export schema_version {ver} > supported {SCHEMA_VERSION}")
+    loaded = {}
+    for t in TABLE_ORDER:
+        rows = payload["tables"].get(t, [])
+        if not rows:
+            loaded[t] = 0
+            continue
+        cols = list(rows[0])
+        sql = (f"INSERT OR REPLACE INTO {t} ({', '.join(cols)}) "
+               f"VALUES ({', '.join('?' for _ in cols)})")
+        conn.executemany(sql, [[r.get(c) for c in cols] for r in rows])
+        loaded[t] = len(rows)
+    conn.commit()
+    return loaded
+
+
+def backup_db(src_path=DEFAULT_DB, dst_path=None) -> Path:
+    """Online binary backup via sqlite3 backup API (safe while DB is open)."""
+    from datetime import datetime
+    src = Path(src_path)
+    if dst_path is None:
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        dst_path = src.with_name(f"{src.name}.bak-{stamp}")
+    dst = Path(dst_path)
+    with sqlite3.connect(str(src)) as s, sqlite3.connect(str(dst)) as d:
+        s.backup(d)
+    return dst

@@ -60,6 +60,8 @@ Steps that WOULD run with --run:
                   POST status; POST duplicate clear; 404 unknown; 400 bad json (stays up)
   P5  negative:   add missing id -> exit 2; status unknown/no-tracebacks;
                   import --no-strip must not wipe stripped rows; unicode round-trip
+  P5b export:     export json/csv(zip, 7 tables)/md; csv w/o --out -> 2;
+                  restore -> report + all table counts match; backup opens, row parity
   P6  vn-it-cv:   selfcheck_cv.py all -> exit 0; 2 temp negative CVs -> exit 1;
                   render_cv.py -> html with <header>, no <!-- comments
   P7  cleanup:    kill server; remove temp (unless --keep); assert real tree unchanged
@@ -233,6 +235,28 @@ run_suite() {
   python3 "$CLI_REL" add --json '{"id":"2026-10-import-unicode","title":"Kỹ sư Backend","company":"Công ty Việt","source":"import","url":"local://vn","location":"Hà Nội"}' >/dev/null
   local uni; uni=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select company from jobs where id='2026-10-import-unicode'\").fetchone()[0])")
   assert_eq "unicode round-trip" "$uni" "Công ty Việt"
+
+  step "P5b export / restore / backup (B7)"
+  local EX="$TMPBASE/export"; mkdir -p "$EX"
+  python3 "$CLI_REL" export --out "$EX/state.json" >/dev/null; assert_true "export json" $?
+  python3 "$CLI_REL" export --format csv --out "$EX/state.zip" >/dev/null; assert_true "export csv" $?
+  local zt; zt=$(python3 -c "import zipfile;n=zipfile.ZipFile('$EX/state.zip').namelist();print(sum(1 for x in n if x.endswith('.csv')))")
+  assert_eq "csv zip has 7 table files" "$zt" "7"
+  python3 "$CLI_REL" export --format csv >/dev/null 2>&1
+  assert_eq "csv without --out -> 2" "$?" "2"
+  python3 "$CLI_REL" export --format md >"$EX/state.md"; assert_true "export md" $?
+  grep -q 'Funnel:' "$EX/state.md"; assert_true "md has funnel" $?
+  python3 "$CLI_REL" restore --in "$EX/state.json" --into "$EX/restore.db" >/dev/null; assert_true "restore" $?
+  local ra rb; ra=$(python3 "$CLI_REL" report); rb=$(python3 "$CLI_REL" --db "$EX/restore.db" report)
+  assert_eq "restore round-trips report" "$ra" "$rb"
+  local rcounts; rcounts=$(python3 -c "
+import sqlite3
+a=sqlite3.connect('jobcopilot.db');b=sqlite3.connect('$EX/restore.db')
+t=('runs','jobs','job_events','run_items','cv_versions','prep','prep_rounds')
+print(sum(1 for x in t if a.execute(f'select count(*) from {x}').fetchone()[0]!=b.execute(f'select count(*) from {x}').fetchone()[0]))")
+  assert_eq "all table counts match after restore" "$rcounts" "0"
+  python3 "$CLI_REL" backup --out "$EX/b.bak" >/dev/null; assert_true "backup" $?
+  assert_eq "backup opens + row parity" "$(python3 -c "import sqlite3;print(sqlite3.connect('$EX/b.bak').execute('select count(*) from jobs').fetchone()[0])")" "$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute('select count(*) from jobs').fetchone()[0])")"
 
   step "P6 vn-it-cv"
   if [ -f profile.md ]; then
