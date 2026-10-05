@@ -18,6 +18,20 @@ https://www.topcv.vn/tim-viec-lam-<keyword-slug>?type_keyword=1&page=<n>
 
 > Phân trang `?page=N` hoạt động và cho item khác nhau (verified page 1 vs page 2).
 
+### Lọc theo địa điểm (đã thử, KHÔNG dùng URL filter)
+
+⚠️ **URL filter location của TopCV không lọc sạch** — đừng tin param, hãy lọc client-side:
+
+| Cách thử | Kết quả |
+|---|---|
+| `?locations=l2lv2` | ❌ keyword bị bỏ, trả mọi ngành ở HCM |
+| `/…-tai-ho-chi-minh-l2lv2?locations=l2_l1_l8` | ⚠️ 20/51 HCM (lẫn HN + quảng cáo) |
+| `/…-tai-ho-chi-minh` (path) | ❌ 0 job |
+
+**Cách chạy được:** quét list keyword gốc (`?type_keyword=1&page=N`), rồi **lọc `city-text` client-side** (`/hồ chí minh/i.test(loc)`). Verified 2026-10-05: page 1 có 51 card, 12 HCM.
+
+> Hố `?type_keyword=1&location=1` / `&city=…` trả **403** (param sai → chặn) — không dùng.
+
 ## 2. List page — job card
 
 Container: `.job-item-search-result` (đếm được ~52/trang). Mỗi card có `data-job-id="<id>"`.
@@ -105,4 +119,5 @@ async (url) => {
 - [x] Xác nhận phân trang (`?page=N`) và URL detail.
 - [x] JSON-LD `JobPosting` **có** → dùng path 1.
 - [x] Parse 1 JD mẫu sang field cấu trúc + `jc add` vào DB thật.
+- [x] Ghi nhận URL filter location không dùng được → lọc `city-text` client-side.
 - [x] Cập nhật tiêu đề file + ngày verify.
