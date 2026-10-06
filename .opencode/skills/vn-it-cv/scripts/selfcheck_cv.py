@@ -45,6 +45,21 @@ _NOISE = {
 # tokens allowed even without a literal profile match (common resume vocabulary)
 _ALLOW = {"agile", "microservices"}
 
+# mechanical spelling variants (JS/JS, K8s/Kubernetes…) so a CV writing one form
+# still matches a profile/confirmed skill written in another. Not personal data.
+_ALIAS_GROUPS = (
+    {"javascript", "js"},
+    {"typescript", "ts"},
+    {"kubernetes", "k8s"},
+    {"postgresql", "postgres"},
+    {"node.js", "nodejs", "node"},
+    {"spring boot", "springboot"},
+    {"react", "reactjs", "react.js"},
+    {"angular", "angularjs"},
+    {"elasticsearch", "elastic search"},
+)
+_ALIAS_MAP = {t: grp for grp in _ALIAS_GROUPS for t in grp}
+
 
 _SUF = ("ization", "isation", "ation", "izing", "ising", "ized", "ised",
         "ies", "ing", "ed", "es", "s")
@@ -196,11 +211,18 @@ def _entry_stems(entry: str):
     return stems
 
 
+def _variants(w: str):
+    return _ALIAS_MAP.get(w, (w,))
+
+
 def _match(w: str, stems) -> bool:
-    if w in _ALLOW or w in stems or _stem(w) in stems or _prefixes(_stem(w)) in stems:
-        return True
-    parts = [p for p in re.split(r"[-/]", w) if p]
-    return bool(parts) and all(p in stems or _stem(p) in stems or _prefixes(_stem(p)) in stems for p in parts)
+    for v in _variants(w):
+        if v in _ALLOW or v in stems or _stem(v) in stems or _prefixes(_stem(v)) in stems:
+            return True
+        parts = [p for p in re.split(r"[-/]", v) if p]
+        if parts and all(p in stems or _stem(p) in stems or _prefixes(_stem(p)) in stems for p in parts):
+            return True
+    return False
 
 
 def _tech_line_problems(text: str, profile_text: str):
@@ -246,11 +268,7 @@ def check(cv: Path, profile_text: str, strict_summary: bool = False):
     m = re.search(r"##\s+Skills\s*\n(.*?)(?=\n##\s|\Z)", text, re.S)
     if m:
         for w in sorted(set(_skills_tokens(m.group(1)))):
-            if w in _ALLOW or w in stems or _stem(w) in stems or _prefixes(_stem(w)) in stems:
-                continue
-            # multi-word/hyphen fragment like "3m-orders": check each part
-            parts = [p for p in re.split(r"[-/]", w) if p]
-            if parts and all(p in stems or _stem(p) in stems or _prefixes(_stem(p)) in stems for p in parts):
+            if _match(w, stems):
                 continue
             problems.append(f"skill '{w}' not backed by profile.md (evidence/confirmed)")
 
