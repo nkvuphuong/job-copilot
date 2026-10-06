@@ -22,7 +22,7 @@
 - **Font system ATS-safe:** Arial, Helvetica 10–12pt body; heading 14–16pt. (CV generator dùng `Arial,Helvetica,sans-serif` — bỏ Georgia/serif để font stack nhất quán.)
 - **Ngày:** một format duy nhất mọi chỗ (mm/yyyy). Format lẫn lộn → trừ điểm timeline.
 - **File:** text-based PDF (chọn/copy được chữ) hoặc DOCX khi Workday/Taleo yêu cầu. KHÔNG ảnh-only/scanned.
-- **Độ dài:** 1 trang khi <10 năm; ≤2 trang cho senior/13+ năm.
+- **Độ dài:** 1 trang khi <10 năm; ≤2 trang cho senior/13+ năm. `ats_check.py` cảnh báo nếu >2 trang hoặc trang 2 lèo tèo.
 - **Tên file chuyên nghiệp:** `NguyenVanA-Backend-2026.pdf`, không `CV.pdf`, không `cv-final-final.pdf`.
 - **Bullet:** ≤2 dòng (r/ER cho ≤2–3); solid circle/square; không bullet lồng.
 - **Keyword trong ngữ cảnh:** mỗi vị trí kết bằng `**Tech:** [...]` (tech thật dùng ở role đó) — keyword trong Experience được ATS/recruiter đánh giá cao hơn chỉ nằm ở Skills. Mỗi tech phải có trong bullet của role hoặc `confirmed: true` (selfcheck check #5).
@@ -48,6 +48,7 @@
 | PDF text-based | `export_cv.py` (Chrome headless), `/Font` | ✅ |
 | DOCX fallback | `export_cv.py --docx` (pandoc) | ✅ |
 | Mô phỏng ATS | `ats_check.py` (email/phone/URL, thứ tự section, ngày, header) | ✅ (mới 2026-10-06) |
+| Phủ keyword JD | `jd_coverage.py` (ADD/CONTEXT/UNCONF/GAP) | ✅ (mới 2026-10-06) |
 | Độ dài | phụ thuộc nội dung; senior có thể tới 2 trang | ⚠️ xem HM (canh 1–2 trang) |
 | Bullet ≤2 dòng | có bullet dài | ⚠️ rút khi draft |
 

@@ -24,7 +24,8 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 - `scripts/render_cv.py` — render `cv/*.md` → HTML in PDF (strip mọi comment HTML kể cả nhiều dòng; contact nhiều dòng render riêng hàng; `break-inside` chống cắt entry)
 - `scripts/export_cv.py` — `cv/*.md` → PDF text-based (Chrome headless); `--docx` xuất thêm DOCX (pandoc)
 - `scripts/selfcheck_cv.py` — kiểm trung thực: evidence_id (#1) + skill claim map về bullet/`confirmed: true` (#2); Summary warn (#3); thứ tự kinh nghiệm (#4); `**Tech:**` mỗi role phải có bằng chứng (#5); header không lộ placeholder/comment (#6)
-- `scripts/ats_check.py` — mô phỏng ATS (stdlib): email/phone/URL, thứ tự section, ngày mỗi role, header sạch; cảnh báo PDF cũ/rasterized
+- `scripts/ats_check.py` — mô phỏng ATS (stdlib): email/phone/URL, thứ tự section, ngày mỗi role, header sạch; cảnh báo PDF cũ/rasterized/quá 2 trang
+- `scripts/jd_coverage.py` — báo cáo phủ keyword JD ↔ CV: ADD (có mà CV thiếu) / CONTEXT (chỉ ở Skills) / UNCONF / GAP; advisory, không gate
 
 ## Bước 0 — Routing
 
@@ -50,6 +51,7 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 5. Xác định **loại công ty đích** (ma trận trong `vn-market.md` mục 1) trước khi chọn chuẩn CV — không mặc định một chuẩn. Không rõ → hỏi user.
 6. Trao đổi với user bằng tiếng Việt; ngôn ngữ CV theo JD (mặc định EN cho IT).
 7. Không ghi lương vào CV; không thêm mục thừa (sở thích, người tham chiếu) khi không được yêu cầu.
+8. **Alias & Highlights:** viết tech theo cách viết của JD; lần đầu `Full (Abbrev)` (vd `Kubernetes (K8s)`), sau đó nhất quán 1 dạng. `## Selected Achievements` (Highlights) chỉ dùng khi Summary chứa <2 metric mạnh: ≤3 bullet, mỗi bullet có `<!-- e0xx -->`, và vẫn giữ ≤2 trang.
 
 ## Workflow GENERATE
 
@@ -64,6 +66,7 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 5. **Self-score** bằng `references/rubric.md` → báo điểm + danh sách chỗ cần user xác nhận.
    - **Self-check trung thực:** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail = có evidence_id lạ, skill claim vượt bullet/`confirmed: true`, `**Tech:**` thiếu bằng chứng, hoặc header lộ placeholder → sửa trước khi báo user. Summary metric là warn-only (thêm `--strict-summary` để fail).
    - **Mô phỏng ATS:** `python3 .opencode/skills/vn-it-cv/scripts/ats_check.py cv/<file>.md` — fail = thiếu email/phone/URL, sai thứ tự section, role thiếu ngày, hoặc header còn placeholder.
+   - **Phủ keyword (advisory):** `python3 .opencode/skills/vn-it-cv/scripts/jd_coverage.py cv/<file>.md jobs/<job>.md` — xem ADD/CONTEXT/GAP; chỉ thêm khi có evidence, không nhồi.
 6. **Output**: hỏi đường dẫn, mặc định `./cv/<Ten>-<Role>-2026.md`. Render HTML/PDF:
    `python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md` (batch: `cv/*.md`) → `cv/<file>.pdf` text-based (Chrome headless). Thêm `--docx` nếu JD yêu cầu Word. (Chỉ cần `render_cv.py` khi muốn xem HTML trong trình duyệt.)
 7. Nhắc: nộp bản PDF; xin referral **trước khi** apply nếu chưa nộp.

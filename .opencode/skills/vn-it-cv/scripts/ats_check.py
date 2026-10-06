@@ -15,8 +15,8 @@ Gating checks (exit 1 on failure):
   4. no placeholder/comment leak in the header
 
 Warn-only (best-effort, never fails):
-  5. if a sibling .pdf exists, it is a real PDF with an embedded font and not
-     older than the .md (a stale or rasterized export)
+  5. if a sibling .pdf exists: it is a real PDF with an embedded font, not older
+     than the .md, and within 2 pages (flags a sparse page 2)
   6. glued-token heuristic on the extracted text (page-break artefacts)
 """
 
@@ -105,6 +105,11 @@ def check(cv: Path):
         data = pdf.read_bytes()
         if data[:5] != b"%PDF-" or b"/Font" not in data:
             warnings.append("PDF has no embedded text layer (rasterized?) — check the export")
+        pages = len(re.findall(rb"/Type\s*/Page[^s]", data))
+        if pages > 2:
+            warnings.append(f"{pages} pages — trim to <=2")
+        elif pages == 2 and len(re.sub(r"\s+", " ", md)) < 3600:
+            warnings.append("page 2 looks sparse — tighten to 1 page or add content")
     glued = sorted(set(_GLUE.findall(text)))
     if glued:
         warnings.append(f"possible glued tokens (page-break artefact?): {', '.join(glued)}")
