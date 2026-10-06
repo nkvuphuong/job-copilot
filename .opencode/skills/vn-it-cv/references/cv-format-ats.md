@@ -8,6 +8,7 @@
 - **Single-column**, đọc top→bottom. Two-column/sidebar → parser trộn dòng (Greenhouse liệt kê là nguyên nhân parse lỗi). → CV generator phải luôn 1 cột.
 - **Heading chuẩn:** Summary, Skills, Experience, Education, Certifications, Projects. Không đặt tên sáng tạo ("My Journey").
 - **Contact trong body**, KHÔNG header/footer HTML (nhiều ATS bỏ qua header/footer).
+- **Contact 2 dòng** cố định: dòng 1 địa điểm · email · phone; dòng 2 github · linkedin → URL không bị wrap/cắt. `render_cv.py` render mỗi dòng contact thành 1 hàng riêng.
 - Thứ tự senior: Header → Summary → (Selected Achievements?) → Skills → Experience → Education.
 - Thứ tự fresher: Education → Projects → Skills → Experience → Certifications.
 
@@ -18,12 +19,15 @@
 - Không lộ thông tin thừa: CCCD, địa chỉ nhà chi tiết, số tài khoản.
 
 ## 3. Typography & xuất file
-- **Font system ATS-safe:** Arial, Calibri, Helvetica, Georgia 10–12pt body; heading 14–16pt. (CV generator dùng `Arial,Calibri,Helvetica,Georgia,sans-serif`.)
+- **Font system ATS-safe:** Arial, Helvetica 10–12pt body; heading 14–16pt. (CV generator dùng `Arial,Helvetica,sans-serif` — bỏ Georgia/serif để font stack nhất quán.)
 - **Ngày:** một format duy nhất mọi chỗ (mm/yyyy). Format lẫn lộn → trừ điểm timeline.
 - **File:** text-based PDF (chọn/copy được chữ) hoặc DOCX khi Workday/Taleo yêu cầu. KHÔNG ảnh-only/scanned.
 - **Độ dài:** 1 trang khi <10 năm; ≤2 trang cho senior/13+ năm.
 - **Tên file chuyên nghiệp:** `NguyenVanA-Backend-2026.pdf`, không `CV.pdf`, không `cv-final-final.pdf`.
 - **Bullet:** ≤2 dòng (r/ER cho ≤2–3); solid circle/square; không bullet lồng.
+- **Keyword trong ngữ cảnh:** mỗi vị trí kết bằng `**Tech:** [...]` (tech thật dùng ở role đó) — keyword trong Experience được ATS/recruiter đánh giá cao hơn chỉ nằm ở Skills. Mỗi tech phải có trong bullet của role hoặc `confirmed: true` (selfcheck check #5).
+- **Skills phân tầng:** dòng `**Core:**` đầu tiên (3–6 skill khớp JD nhất), rồi mới tới các nhóm Backend/Frontend/Databases/Cloud.
+- **Ngắt trang:** CSS `h3 { break-after: avoid }` + `.meta { break-after: avoid }` + `li { break-inside: avoid }` — không để entry bị cắt đôi hoặc dính chữ khi sang trang.
 
 ## 4. Bullet content (impact)
 - Công thức **XYZ** (r/EngineeringResumes + Google): *Accomplished X as measured by Y by doing Z*.
@@ -37,10 +41,13 @@
 | Single-column | render 1 cột | ✅ |
 | Heading chuẩn | Summary/Skills/Experience/Education | ✅ |
 | Contact trong body div | ✅ | ✅ |
+| Contact 2 dòng (URL không wrap) | ✅ | ✅ (sửa 2026-10-06) |
 | Không table/icon/skill-bar | không có | ✅ |
-| Font system | `Arial,Calibri,Helvetica,Georgia` | ✅ (đã sửa 2026-10-05) |
-| PDF text-based | `export_cv.py` (Chrome headless), `/ToUnicode` | ✅ |
+| Font system | `Arial,Helvetica,sans-serif` | ✅ (sửa 2026-10-06) |
+| Keyword trong ngữ cảnh (Tech line) | `**Tech:**` mỗi role | ✅ (selfcheck #5, 2026-10-06) |
+| PDF text-based | `export_cv.py` (Chrome headless), `/Font` | ✅ |
 | DOCX fallback | `export_cv.py --docx` (pandoc) | ✅ |
+| Mô phỏng ATS | `ats_check.py` (email/phone/URL, thứ tự section, ngày, header) | ✅ (mới 2026-10-06) |
 | Độ dài | phụ thuộc nội dung; senior có thể tới 2 trang | ⚠️ xem HM (canh 1–2 trang) |
 | Bullet ≤2 dòng | có bullet dài | ⚠️ rút khi draft |
 

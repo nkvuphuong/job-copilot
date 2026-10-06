@@ -7,7 +7,8 @@ understands the fixed shape emitted by the vn-it-cv templates:
     # Name
     Target title
     <blank>
-    contact line (· separated, may contain markdown links)
+    contact line(s) (· separated, may contain markdown links; one or more lines,
+                       each rendered on its own row — keep URLs from wrapping)
     <blank>
     ## Section
     ### Heading            (company / role heading, or plain heading)
@@ -26,7 +27,7 @@ import re
 import sys
 from pathlib import Path
 
-_COMMENT = re.compile(r"<!--.*?-->")
+_COMMENT = re.compile(r"<!--.*?-->", re.S)
 _LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 _BOLD = re.compile(r"\*\*(.+?)\*\*")
 _MD_LINKSLASH = re.compile(r"(?<![\w/])(github\.com/[\w.-]+|linkedin\.com/in/[\w.-]+|[\w.\-]+@[\w.\-]+\.\w+)(?![\w/])")
@@ -36,11 +37,11 @@ _HEAD = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CV — {name}</title>
+<title>{title}</title>
 <style>
   :root {{ --ink:#1a1a1a; --muted:#555; --rule:#d9d9d9; --accent:#0f4c81; }}
   * {{ box-sizing: border-box; }}
-  body {{ margin:0; color:var(--ink); font:13.5px/1.5 Arial,Calibri,Helvetica,Georgia,sans-serif; background:#f3f3f3; }}
+  body {{ margin:0; color:var(--ink); font:13.5px/1.5 Arial,Helvetica,sans-serif; background:#f3f3f3; }}
   .page {{ width:210mm; min-height:297mm; margin:12px auto; padding:16mm 15mm; background:#fff; }}
   header {{ border-bottom:2px solid var(--accent); padding-bottom:10px; margin-bottom:14px; }}
   h1 {{ font-size:24px; margin:0 0 2px; letter-spacing:.3px; }}
@@ -48,10 +49,10 @@ _HEAD = """<!DOCTYPE html>
   .contact {{ color:var(--muted); font-size:12.5px; }}
   .contact a {{ color:var(--muted); text-decoration:none; }}
   h2 {{ font-size:13px; text-transform:uppercase; letter-spacing:1.1px; color:var(--accent); margin:16px 0 6px; border-bottom:1px solid var(--rule); padding-bottom:3px; }}
-  h3 {{ font-size:14px; margin:10px 0 1px; }}
-  .meta {{ color:var(--muted); font-size:12px; margin:0 0 4px; }}
+  h3 {{ font-size:14px; margin:10px 0 1px; break-after: avoid; }}
+  .meta {{ color:var(--muted); font-size:12px; margin:0 0 4px; break-after: avoid; }}
   ul {{ margin:4px 0 8px; padding-left:18px; }}
-  li {{ margin-bottom:3px; }}
+  li {{ margin-bottom:3px; break-inside: avoid; }}
   p {{ margin:4px 0; }}
   .skills p {{ margin:2px 0; }}
   a {{ color:var(--accent); text-decoration:none; }}
@@ -105,8 +106,8 @@ def render(md_path: Path) -> str:
 
     name = ""
     target = ""
-    contact = ""
-    # --- header block: # Name / Target title / (blank) / contact ---
+    contact_lines = []
+    # --- header block: # Name / Target title / (blank) / contact (1..n lines) ---
     i = 0
     while i < len(lines):
         s = lines[i].strip()
@@ -125,19 +126,20 @@ def render(md_path: Path) -> str:
         i += 1
     if header_rest:
         target = header_rest[0]
-    if len(header_rest) > 1:
-        contact = " · ".join(header_rest[1:])
+    contact_lines = header_rest[1:]
 
     lang = "vi" if md_path.stem.endswith("-vn") else "en"
-    out = [_HEAD.format(lang=lang, name=html.escape(name))]
+    title = " — ".join(p for p in (name, target, "CV") if p)
+    out = [_HEAD.format(lang=lang, title=html.escape(title), name=html.escape(name))]
 
     # --- header ---
     out.append("  <header>")
     out.append(f"    <h1>{html.escape(name)}</h1>")
     if target:
         out.append(f'    <div class="title">{_inline(target)}</div>')
-    if contact:
-        out.append(f'    <div class="contact">{_contact(contact)}</div>')
+    if contact_lines:
+        joined = "<br>".join(_contact(line) for line in contact_lines)
+        out.append(f'    <div class="contact">{joined}</div>')
     out.append("  </header>")
 
     # --- body ---
@@ -177,6 +179,9 @@ def render(md_path: Path) -> str:
                     mode = "ul"
                 out.append(f"<li>{_inline(s[2:].strip())}</li>")
         else:  # paragraph / meta line
+            if mode == "ul":  # e.g. a `**Tech:**` line closing out a bullet list
+                out.append("</ul>")
+                mode = None
             if _BOLD.search(s) and not pending_meta and _is_entry_heading(section):
                 out.append(f"<h3>{_inline(s)}</h3>")
                 pending_meta = True
@@ -205,7 +210,7 @@ def main(argv):
         src = Path(arg)
         dst = Path(argv[1]) if explicit_dst else src.with_suffix(".html")
         html_out = render(src)
-        assert "<!--" not in html_out, f"comment leaked into {dst}"
+        assert "<!--" not in html_out and "&lt;!--" not in html_out, f"comment leaked into {dst}"
         dst.write_text(html_out, encoding="utf-8")
         print(f"{src} -> {dst}")
     return 0

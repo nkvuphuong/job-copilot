@@ -14,6 +14,10 @@ Checks (all must pass):
    should trace to profile.md. Reported as warnings unless --strict-summary.
 4. experience order: `## Experience` entries must be reverse-chronological
    (newest start date first) — catches a newer role appended below older ones.
+5. per-role Tech line: every tech in a `**Tech:**` line must appear in that
+   role's own bullets OR be a `confirmed: true` skill in profile.md §3.
+6. header scope: the header (name/title/contact) must not leak template
+   placeholders/comments (`[`, `]`, `<!--`, `TODO`).
 
 Usage:
     python3 selfcheck_cv.py                 # all cv/*-en.md + cv/*-vn.md
@@ -36,7 +40,7 @@ _NOISE = {
     "daily", "drivers", "etc", "ai", "data", "cloud", "devops",
     "architecture", "leadership", "messaging", "infra", "systems",
     "queues", "apis", "engineering", "delivery", "ownership", "mentoring",
-    "large", "scale", "distributed", "practices",
+    "large", "scale", "distributed", "practices", "core", "tech",
 }
 # tokens allowed even without a literal profile match (common resume vocabulary)
 _ALLOW = {"agile", "microservices"}
@@ -171,6 +175,61 @@ def _experience_order_problems(text: str):
     return problems
 
 
+def _confirmed_tokens(profile_text: str):
+    """Token stems of every §3 Skills row marked `confirmed: true`."""
+    toks = set()
+    m = re.search(r"##\s+3\.\s+Skills\s*\n(.*?)(?=\n##\s|\Z)", profile_text, re.S)
+    if not m:
+        return toks
+    for row in m.group(1).splitlines():
+        cells = [c.strip() for c in row.strip().strip("|").split("|")]
+        if len(cells) >= 7 and cells[0].startswith("s") and cells[5].lower() == "true":
+            for w in re.findall(r"[a-z0-9+#.]+", cells[1].lower()):
+                toks.update((w, _stem(w), _stem(w)[:6]))
+    return toks
+
+
+def _entry_stems(entry: str):
+    stems = set()
+    for w in re.findall(r"[a-z0-9+#.]+", entry.lower()):
+        stems.update((w, _stem(w), _stem(w)[:6]))
+    return stems
+
+
+def _match(w: str, stems) -> bool:
+    if w in _ALLOW or w in stems or _stem(w) in stems or _prefixes(_stem(w)) in stems:
+        return True
+    parts = [p for p in re.split(r"[-/]", w) if p]
+    return bool(parts) and all(p in stems or _stem(p) in stems or _prefixes(_stem(p)) in stems for p in parts)
+
+
+def _tech_line_problems(text: str, profile_text: str):
+    """Each `**Tech:**` entry line must be backed by that role's own text or a
+    `confirmed: true` skill — so a per-role tech list can't smuggle in claims."""
+    problems = []
+    m = re.search(r"##\s+Experience\s*\n(.*?)(?=\n##\s|\Z)", text, re.S)
+    if not m:
+        return problems
+    confirmed = _confirmed_tokens(profile_text)
+    for entry in re.split(r"\n(?=###\s)", m.group(1)):
+        tech = re.search(r"\*\*Tech:\*\*\s*(.+)", entry)
+        if not tech:
+            continue
+        stems = _entry_stems(entry.replace(tech.group(0), "")) | confirmed
+        for w in sorted(set(_skills_tokens(tech.group(1)))):
+            if not _match(w, stems):
+                problems.append(f"tech '{w}' in Tech line not backed by this role's bullets/confirmed")
+    return problems
+
+
+def _header_problems(text: str):
+    """Header (name/title/contact) must not leak template placeholders/comments."""
+    m = re.search(r"\A(.*?)(?=\n##\s)", text, re.S)
+    header = m.group(1) if m else text
+    return [f"header still contains placeholder/comment {bad!r}"
+            for bad in ("[", "]", "<!--", "TODO") if bad in header]
+
+
 def check(cv: Path, profile_text: str, strict_summary: bool = False):
     problems = []
     warnings = []
@@ -201,6 +260,12 @@ def check(cv: Path, profile_text: str, strict_summary: bool = False):
 
     # 4. experience order: newest start date first
     problems.extend(_experience_order_problems(text))
+
+    # 5. per-role `**Tech:**` lines backed by that role's bullets / confirmed skills
+    problems.extend(_tech_line_problems(text, profile_text))
+
+    # 6. header must not leak template placeholders / comments
+    problems.extend(_header_problems(text))
     return problems, warnings
 
 

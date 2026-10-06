@@ -21,9 +21,10 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 - `references/review-sources.md` — nguồn review bên ngoài (r/EngineeringResumes, ByteByteGo, ATS guides) + tool upload (Resumly…) + cách đối chiếu
 - `templates/cv-template-en.md` / `templates/cv-template-vn.md` — skeleton khi generate
 - `templates/cv-print.html` — bản A4 in PDF bằng trình duyệt
-- `scripts/render_cv.py` — render `cv/*.md` → HTML in PDF (tự strip `<!-- evidence_id -->`)
+- `scripts/render_cv.py` — render `cv/*.md` → HTML in PDF (strip mọi comment HTML kể cả nhiều dòng; contact nhiều dòng render riêng hàng; `break-inside` chống cắt entry)
 - `scripts/export_cv.py` — `cv/*.md` → PDF text-based (Chrome headless); `--docx` xuất thêm DOCX (pandoc)
-- `scripts/selfcheck_cv.py` — kiểm trung thực: evidence_id + skill claim phải map về bullet/`confirmed: true` trong `profile.md`; Summary warn-only
+- `scripts/selfcheck_cv.py` — kiểm trung thực: evidence_id (#1) + skill claim map về bullet/`confirmed: true` (#2); Summary warn (#3); thứ tự kinh nghiệm (#4); `**Tech:**` mỗi role phải có bằng chứng (#5); header không lộ placeholder/comment (#6)
+- `scripts/ats_check.py` — mô phỏng ATS (stdlib): email/phone/URL, thứ tự section, ngày mỗi role, header sạch; cảnh báo PDF cũ/rasterized
 
 ## Bước 0 — Routing
 
@@ -42,8 +43,9 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
    - **Có evidence** (map được bullet trong profile.md) → để trong mục Skills bình thường.
    - **Chỉ "có trong list kỹ năng"** (`confirmed: false`) → **KHÔNG** list trong CV. Muốn dùng thì user phải xác nhận dùng thật → thêm bullet bằng chứng vào `profile.md` §4/§5 và bật `confirmed: true` TRƯỚC. `selfcheck_cv.py` chặn skill `confirmed: false`.
    - Cấm suy diễn "chắc cũng dùng" từ việc có tech liên quan.
+   - Dòng `**Tech:**` cuối mỗi vị trí theo cùng luật: chỉ tech thật dùng ở role đó (có trong bullet của role hoặc `confirmed: true`); `selfcheck_cv.py` #5 chặn.
 3. **Summary lấy từ §1b Positioning**: mọi con số/headline trong Summary phải khớp `profile.md` §1b + Meta. Không tự nghĩ số/định vị mới. `selfcheck_cv.py` cảnh báo (warn) metric không truy về được.
-3b. **Gate Meta cho CV EN**: nếu target EN/quốc tế mà `profile.md` §1 Meta còn `[confirm: ...]` ở Languages/Work authorization → dừng, hỏi user (không bịa level).
+3b. **Ngôn ngữ & quyền làm việc trên CV**: KHÔNG đưa CEFR tự đánh giá (A2–B1…) hay work-authorization/sponsorship lên CV — đó là chuyện trao đổi sau, không "lật bài ngửa". Năng lực tiếng Anh thể hiện qua kinh nghiệm thật (khách/dự án quốc tế) trong Summary/Experience. Ngoại lệ duy nhất: JD là remote cho công ty **ngoài VN** → thêm 1 dòng `Time zone: GMT+7`.
 4. Số liệu thị trường/lương chỉ lấy từ `references/vn-market.md`, kèm nguồn + ngày; không tự sinh số mới.
 5. Xác định **loại công ty đích** (ma trận trong `vn-market.md` mục 1) trước khi chọn chuẩn CV — không mặc định một chuẩn. Không rõ → hỏi user.
 6. Trao đổi với user bằng tiếng Việt; ngôn ngữ CV theo JD (mặc định EN cho IT).
@@ -60,7 +62,8 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 4. **Draft** theo `templates/cv-template-en.md` hoặc `cv-template-vn.md` (theo target).
    - Bullet = Action + tech + kết quả; chỗ thiếu số để `[cần xác nhận: ...]`, không tự điền.
 5. **Self-score** bằng `references/rubric.md` → báo điểm + danh sách chỗ cần user xác nhận.
-   - **Self-check trung thực:** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail = có evidence_id lạ hoặc skill claim vượt bullet/`confirmed: true` trong `profile.md` → sửa trước khi báo user. Summary metric là warn-only (thêm `--strict-summary` để fail).
+   - **Self-check trung thực:** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail = có evidence_id lạ, skill claim vượt bullet/`confirmed: true`, `**Tech:**` thiếu bằng chứng, hoặc header lộ placeholder → sửa trước khi báo user. Summary metric là warn-only (thêm `--strict-summary` để fail).
+   - **Mô phỏng ATS:** `python3 .opencode/skills/vn-it-cv/scripts/ats_check.py cv/<file>.md` — fail = thiếu email/phone/URL, sai thứ tự section, role thiếu ngày, hoặc header còn placeholder.
 6. **Output**: hỏi đường dẫn, mặc định `./cv/<Ten>-<Role>-2026.md`. Render HTML/PDF:
    `python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md` (batch: `cv/*.md`) → `cv/<file>.pdf` text-based (Chrome headless). Thêm `--docx` nếu JD yêu cầu Word. (Chỉ cần `render_cv.py` khi muốn xem HTML trong trình duyệt.)
 7. Nhắc: nộp bản PDF; xin referral **trước khi** apply nếu chưa nộp.
