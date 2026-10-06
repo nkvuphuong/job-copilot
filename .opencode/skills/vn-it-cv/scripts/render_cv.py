@@ -199,9 +199,11 @@ def main(argv):
     if not argv:
         print(__doc__)
         return 2
-    for arg in argv[:-1] if len(argv) > 2 else argv:
+    # explicit output path only for `render_cv.py <in.md> <out.html>` (2 args, last not .md)
+    explicit_dst = len(argv) == 2 and not argv[1].endswith(".md")
+    for arg in (argv[:-1] if explicit_dst else argv):
         src = Path(arg)
-        dst = Path(argv[-1]) if len(argv) == 2 and not argv[-1].endswith(".md") else src.with_suffix(".html")
+        dst = Path(argv[1]) if explicit_dst else src.with_suffix(".html")
         html_out = render(src)
         assert "<!--" not in html_out, f"comment leaked into {dst}"
         dst.write_text(html_out, encoding="utf-8")
