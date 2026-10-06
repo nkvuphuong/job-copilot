@@ -12,6 +12,8 @@ Checks (all must pass):
    PostgreSQL/Golang/Kafka leaked into CVs while the profile only listed them.
 3. summary scope (warn-only by default): numbers/metrics in the CV `## Summary`
    should trace to profile.md. Reported as warnings unless --strict-summary.
+4. experience order: `## Experience` entries must be reverse-chronological
+   (newest start date first) — catches a newer role appended below older ones.
 
 Usage:
     python3 selfcheck_cv.py                 # all cv/*-en.md + cv/*-vn.md
@@ -140,6 +142,35 @@ def _summary_warnings(cv_text: str, profile_text: str):
     return warns
 
 
+_EXP_HEADING = re.compile(r"^###\s+(.*)$", re.M)
+_EXP_START = re.compile(r"(\d{2})/(\d{4})\s*[–-]")
+
+
+def _experience_order_problems(text: str):
+    """Experience entries must run reverse-chronological (newest start date first).
+
+    Catches the class of bug where a newer role is appended below older ones
+    (e.g. a just-added company landing at the bottom of profile.md / the CV),
+    which renders the timeline wrong.
+    """
+    problems = []
+    m = re.search(r"##\s+Experience\s*\n(.*?)(?=\n##\s|\Z)", text, re.S)
+    if not m:
+        return problems
+    dated = []
+    for h in _EXP_HEADING.findall(m.group(1)):
+        d = _EXP_START.search(h)
+        if d:
+            company = h.split("—")[0].split("·")[0].strip()
+            dated.append((int(d.group(2)), int(d.group(1)), company))
+    for (y0, m0, c0), (y1, m1, c1) in zip(dated, dated[1:]):
+        if (y0, m0) < (y1, m1):
+            problems.append(
+                f"experience order: '{c0}' (start {m0:02d}/{y0}) is older than "
+                f"'{c1}' (start {m1:02d}/{y1}) — expected newest first")
+    return problems
+
+
 def check(cv: Path, profile_text: str, strict_summary: bool = False):
     problems = []
     warnings = []
@@ -167,6 +198,9 @@ def check(cv: Path, profile_text: str, strict_summary: bool = False):
     # 3. summary (warn-only by default)
     for w in _summary_warnings(text, profile_text):
         (problems if strict_summary else warnings).append(w)
+
+    # 4. experience order: newest start date first
+    problems.extend(_experience_order_problems(text))
     return problems, warnings
 
 
