@@ -1,10 +1,11 @@
-# CV Template — VN corporate style
+<!-- CV Template — VN corporate style
 
-<!-- Hướng dẫn điền:
+Hướng dẫn điền:
 - Dùng template này khi target: local corporate / SME / bank / telco / nhà nước (xem vn-market.md mục 1).
 - Thay [...] bằng nội dung thật; KHÔNG bịa số liệu — chỗ chưa có ghi [cần xác nhận: ...]
 - Ảnh thẻ 3×4 (nền sáng, chuyên nghiệp) chèn ở góc phải phần thông tin cá nhân — không selfie.
-- Xóa comment HTML trước khi xuất PDF. -->
+- Xóa comment HTML trước khi xuất PDF.
+- Dòng đầu tiên bắt buộc là `# [HỌ VÀ TÊN]` (render_cv.py lấy dòng `# ` ĐẦU TIÊN làm tên). -->
 
 # [HỌ VÀ TÊN]
 [Vị trí ứng tuyển — khớp JD]
@@ -14,7 +15,7 @@
 - Điện thoại: [...] · Email: [email chuyên nghiệp]
 - Địa chỉ: [Quận/Huyện, Tỉnh/Thành phố — không cần số nhà] · Quê quán: [nếu JD/thông lệ yêu cầu]
 - GitHub: [...] · LinkedIn: [...]
-- Ngoại ngữ: [Tiếng Anh — level; Tiếng Việt: bản ngữ] · Quyền làm việc: [VN citizen / cần sponsor?]
+- Ngoại ngữ: [Tiếng Anh] <!-- KHÔNG ghi level CEFR tự đánh giá; KHÔNG ghi dòng "Quyền làm việc" -->
 - [Ảnh thẻ 3×4]
 
 ## Mục tiêu nghề nghiệp
@@ -26,8 +27,9 @@
 - [Thành tích định lượng] <!-- e0xx -->
 
 ## Kỹ năng
+- **Core:** [3–6 skill khớp JD nhất, có bằng chứng]
 - **[Nhóm]:** [...]
-<!-- CHỈ list skill `confirmed: true` trong profile.md §3 (có bullet/stack chứng minh).
+<!-- Core = những gì JD cần nhất, lên đầu để lọt scan. CHỈ list skill `confirmed: true` trong profile.md §3.
      Skill `confirmed: false` (list-only/exploring) → KHÔNG list; selfcheck_cv.py sẽ chặn. -->
 
 
@@ -37,9 +39,11 @@
 [1 dòng bối cảnh: sản phẩm/domain, quy mô team]
 - [Động từ hành động] + [việc làm + công nghệ] + [kết quả đo được] <!-- e0xx -->
 - [...]
+**Tech:** [các tech THẬT SỰ dùng ở role này — mỗi cái phải có trong bullet trên hoặc `confirmed: true`]
 
 ### [Công ty] — [Chức danh] · [Bắt đầu – Kết thúc]
 - [...]
+**Tech:** [...]
 
 ## Dự án
 <!-- Fresher: đưa lên trước Kinh nghiệm làm việc -->
@@ -48,7 +52,7 @@
 - [Đóng góp cá nhân + kết quả] <!-- e1xx -->
 
 ## Học vấn
-**[Trường]** — [Chuyên ngành] · [Bắt đầu – Kết thúc]
+**[Cử nhân Công nghệ Thông tin]** — [Trường] · [Bắt đầu – Kết thúc]
 [GPA nếu ≥ 7.5/10 hoặc ≥ 3.0/4.0; bỏ nếu thấp hơn]
 
 ## Chứng chỉ
