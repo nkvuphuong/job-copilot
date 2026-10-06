@@ -117,7 +117,7 @@ không ORM; mọi thao tác ghi state đi qua `db.py` (CLI và server đều g�
 
 ## Boundaries
 
-- **Always:** đi qua `db.py` khi ghi state; migrate idempotent; giữ `vn-it-cv` + `render_cv.py` + `selfcheck_cv.py` nguyên vẹn; chạy `selfcheck` sau khi sửa `identity.py`.
+- **Always:** đi qua `db.py` khi ghi state; migrate idempotent; giữ skill `vn-it-cv` + các script trong `scripts/` (`render_cv.py`, `export_cv.py`, `selfcheck_cv.py`, `ats_check.py`, `jd_coverage.py`) nguyên vẹn; chạy `selfcheck` sau khi sửa `identity.py`.
 - **Ask first:** đổi schema (thêm/xoá bảng/cột); đổi vocab `status`; thêm dependency; xoá/rewrite `jobs/*.md` ngoài phạm vi strip frontmatter.
 - **Never:** bake DB/personal data vào git; viết CV body vào DB; auto-apply; xoá file content của người dùng; auto-skip ở tier-2.
 

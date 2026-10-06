@@ -43,4 +43,4 @@ Repo code, scripts & docs (only when editing this repo itself):
 - Dev skills apply only to changes in this repo's own code, scripts and docs.
 - `profile.md` is the single source of truth; never invent experience. Tailored
   CVs keep their `<!-- eNNN -->` evidence trace; run
-  `vn-it-cv/scripts/selfcheck_cv.py` before finishing.
+  `vn-it-cv/scripts/selfcheck_cv.py` + `vn-it-cv/scripts/ats_check.py` before finishing.

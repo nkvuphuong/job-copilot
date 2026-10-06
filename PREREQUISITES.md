@@ -9,7 +9,7 @@ personal/global and you must set them up once.
 |---|---|
 | Skill `job-hunt` | `.opencode/skills/job-hunt/` |
 | Skill `vn-it-cv` | `.opencode/skills/vn-it-cv/` |
-| Scripts | `.opencode/skills/vn-it-cv/scripts/render_cv.py`, `selfcheck_cv.py` |
+| Scripts | `.opencode/skills/vn-it-cv/scripts/`: `render_cv.py`, `export_cv.py`, `selfcheck_cv.py`, `ats_check.py`, `jd_coverage.py` |
 
 ## Global — set up once
 

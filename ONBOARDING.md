@@ -51,14 +51,15 @@ Verify the watch-outs in `.opencode/skills/job-hunt/references/itviec.md` still 
 
 > "Tailor a CV for <job id>."
 
-Then run the two scripts yourself to be sure:
+Then run the checks yourself to be sure:
 
 ```bash
-python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md
-python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md
+python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md   # honesty gate
+python3 .opencode/skills/vn-it-cv/scripts/ats_check.py cv/<file>.md      # ATS fields/structure
+python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md      # -> cv/<file>.pdf
 ```
 
-Open the `.html`, print to PDF (A4). Review it. Submit it yourself.
+Review the PDF. Submit it yourself.
 
 ## 7. Prepare for the interview
 
@@ -79,5 +80,6 @@ After each application: "I applied to <job> — log it." Follow the funnel in [W
 ## Troubleshooting
 
 - **Skills not found** → you're not running opencode from inside the repo.
-- **`selfcheck_cv.py` fails** → a CV references an unknown `e0xx` or claims a skill not backed by an evidence bullet / `confirmed: true` skill in `profile.md`. Fix the CV, not the check (or add real evidence to `profile.md` first).
+- **`selfcheck_cv.py` fails** → a CV references an unknown `e0xx`, claims a skill not backed by an evidence bullet / `confirmed: true` skill in `profile.md`, puts an unbacked tech in a `**Tech:**` line, or leaks a placeholder into the header. Fix the CV, not the check (or add real evidence to `profile.md` first).
+- **`ats_check.py` fails** → missing email/phone/profile URL, sections out of order, a role heading without an `MM/YYYY` date, or a header placeholder. Fix the CV.
 - **Scraper returns nothing** → the site's DOM changed; update the matching `references/<source>.md`.

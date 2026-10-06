@@ -121,9 +121,10 @@ Score neo vào **Targeting** trong `profile.md` (trọng số + must-have + nice
 
 1. Load skill `vn-it-cv` → chạy workflow GENERATE với input = `profile.md` + JD.
 2. **Ràng buộc:** chỉ chọn bullet có trong `profile.md`; mỗi bullet giữ `<!-- evidence_id -->`.
-3. **Self-check (bắt buộc):** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail (evidence_id lạ / skill `confirmed: false` bị list / skill claim vượt `profile.md`) → sửa, không tự bịa. Số liệu Summary chỉ được **warn** (không fail) trừ khi chạy `--strict-summary`.
-4. Output: `cv/<company>-<role>-<lang>.md`; render HTML bằng `python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md` → in PDF từ trình duyệt.
-5. Cập nhật `cv_version` + `status` trong `jobs/*.md`.
+3. **Self-check (bắt buộc):** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail (evidence_id lạ / skill `confirmed: false` bị list / skill claim vượt `profile.md` / `**Tech:**` thiếu bằng chứng / header lộ placeholder) → sửa, không tự bịa. Số liệu Summary chỉ được **warn** (không fail) trừ khi chạy `--strict-summary`.
+4. **Mô phỏng ATS (bắt buộc):** `python3 .opencode/skills/vn-it-cv/scripts/ats_check.py cv/<file>.md` — fail (thiếu email/phone/URL, sai thứ tự section, role thiếu ngày, header placeholder). Advisory: `python3 .opencode/skills/vn-it-cv/scripts/jd_coverage.py cv/<file>.md jobs/<job>.md` (ADD/CONTEXT/GAP — chỉ thêm khi có bằng chứng).
+5. Output: `cv/<company>-<role>-<lang>.md` → `python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md` → `cv/<file>.pdf` (text-based, Chrome headless).
+6. Cập nhật `cv_versions` (hash) trong DB; `status` đổi qua UI/`jc status` — **KHÔNG** ghi lifecycle vào `jobs/*.md`.
 
 ## Phase 6.5 — Interview Prep (sau khi nộp / khi có lịch)
 

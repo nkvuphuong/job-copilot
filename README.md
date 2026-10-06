@@ -70,7 +70,8 @@ See **[PREREQUISITES.md](PREREQUISITES.md)** — opencode, the `chrome-devtools`
 
 - `profile.md` is the single source of truth; every experience bullet has a stable `evidence_id`.
 - A tailored CV may only **select / reorder / reword** — never invent. Every bullet keeps its `<!-- e001 -->` trace.
-- `scripts/selfcheck_cv.py` fails if a CV references an unknown evidence id **or** claims a skill not backed by an evidence bullet / `confirmed: true` skill in `profile.md`. Summary metrics are warn-only by default.
+- `scripts/selfcheck_cv.py` fails if a CV references an unknown evidence id, claims a skill not backed by an evidence bullet / `confirmed: true` skill in `profile.md`, puts an unbacked tech in a role's `**Tech:**` line, or leaks a template placeholder into the header. Summary metrics are warn-only by default.
+- `scripts/ats_check.py` simulates ATS text extraction (email / phone / profile URL, section order, per-role dates) and flags a stale or rasterized PDF, a 3-page overflow, or a sparse page 2.
 - No auto-apply. Ever.
 
 ## License

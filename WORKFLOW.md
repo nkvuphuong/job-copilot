@@ -15,7 +15,7 @@ Data flows left to right; you can jump in at any phase.
 | 1 | **Scope** | `profile.md` Targeting | scan parameters | `question` tool |
 | 2 | **Scan** | source + filters | keep-list (Jev-filtered) | `chrome-devtools` MCP + `jev` |
 | 3 | **Extract & Score** | each JD `keep` | `jobs/<id>.md` (raw JD) + row in DB | `references/<source>.md` + `jc` |
-| 4 | **Tailor CV** | `profile.md` + JD | `cv/<file>.md` (+ `.html`) + `cv_versions` | `vn-it-cv` + `selfcheck_cv.py` |
+| 4 | **Tailor CV** | `profile.md` + JD | `cv/<file>.md` + `.html`/`.pdf` + `cv_versions` | `vn-it-cv` + `selfcheck_cv.py` + `ats_check.py` |
 | 5 | **Apply** | tailored CV | `jobs` row: `status: applied` | **human** — UI / `jc status` |
 | 5.5 | **Interview Prep** | `profile.md` + JD + (optional web) | `prep/<job-id>.md` | `references/interview-prep.md` |
 | 6 | **Track** | application events | `job_events` + `jobs.status` | **human** — UI / `jc report` |
@@ -88,22 +88,25 @@ Parse the JD into structured fields, then score against `profile.md` Targeting:
 
 Load `vn-it-cv`, run GENERATE with `profile.md` + JD. Constraints: only bullets from the profile, each keeps `<!-- e0xx -->`.
 
-**Pre-tailor gate (EN / international targets):** if the JD is English or remote/international **and**
-`profile.md` §1 Meta still has `[confirm: ...]` for Languages or Work authorization → **stop and ask the
-user** before generating. These two lines are screened first by overseas employers; a CV missing them is
-weak, and the agent must never invent a level.
+**Header rule (no over-sharing):** do NOT put a self-assessed CEFR level (`A2–B1…`) or
+work-authorization/sponsorship on the CV — those belong to the interview, not the screen. English ability is
+shown through real experience (international clients/projects) in Summary/Experience. Only exception: a JD
+that is **remote for a company outside Vietnam** → add one line `Time zone: GMT+7`.
 
 **Skills rule:** only list skills marked `confirmed: true` in `profile.md` §3. Skills marked
 `confirmed: false` (list-only / exploring, e.g. Kafka) **must not** appear in the CV — the self-check
-enforces this.
+enforces this. Each role also ends with a `**Tech:**` line (the techs actually used in that role); every tech
+there must appear in that role's bullets or be a `confirmed: true` skill.
 
-**Mandatory self-check before the CV leaves your machine:**
+**Mandatory checks before the CV leaves your machine:**
 ```bash
-python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md   # must print ok
-python3 .opencode/skills/vn-it-cv/scripts/render_cv.py cv/<file>.md     # md -> print HTML
+python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md   # honesty gate — must print ok
+python3 .opencode/skills/vn-it-cv/scripts/ats_check.py cv/<file>.md      # ATS fields/structure — must print ok
+python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md      # -> cv/<file>.pdf (text-based)
 ```
-Summary metrics are checked **warn-only** by default (use `--strict-summary` to fail on them).
-Then open the `.html` and print to PDF (`Cmd/Ctrl+P` → A4, background graphics on).
+Summary metrics are **warn-only** by default (`--strict-summary` to fail). `ats_check` also warns on a
+stale/rasterized PDF, >2 pages, or a sparse page 2. Optional advisory: `jd_coverage.py cv/<file>.md
+jobs/<job>.md` for a JD↔CV keyword report (ADD/CONTEXT/GAP) — add only what is evidence-backed, never pad.
 
 ## Phase 5 — Apply
 
@@ -178,4 +181,4 @@ When an offer lands: create `offers/<id>.md` (schema: `offers/_example.md`) with
 
 ## Non-goals (YAGNI)
 
-No auto-apply · **DB/UI đang triển khai từng phần** (state + dedupe + run trong SQLite, xem `ROADMAP.md`; bước 5–6 còn lại) · no bespoke crawler (use the MCP session) · no grounding service (structural constraints + `selfcheck_cv.py`) · **no written interview answer keys** (prep is a cue card) — add only if a real hallucination slips through.
+No auto-apply · **DB/UI đang triển khai từng phần** (state + dedupe + run trong SQLite, xem `ROADMAP.md`; bước 5–6 còn lại) · no bespoke crawler (use the MCP session) · no grounding service (structural constraints + `selfcheck_cv.py`/`ats_check.py`) · **no written interview answer keys** (prep is a cue card) — add only if a real hallucination slips through.
