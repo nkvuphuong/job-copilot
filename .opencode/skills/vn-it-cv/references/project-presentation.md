@@ -66,12 +66,38 @@ Print-on-Demand B2B SaaS for the US market · 350+ employees · 3M+ orders/year.
 
 ## 4. Khi thiếu dữ liệu (số liệu/quy mô)
 
-- **KHÔNG bịa.** Placeholder `[cần xác nhận: ...]` chỉ dùng ở **bản nháp** để đánh dấu chỗ hỏi user —
-  **phải giải quyết trước khi render PDF cuối** (không để lọt vào CV gửi đi; placeholder ở body trông
-  thiếu chuyên nghiệp).
-- Cần thu thập điển hình: team size, số người tuyển, kết quả migration (chi phí/độ trễ/ổn định),
-  tech + scope của dự án mơ hồ, scale (users/đơn vị/khách) của dự án outsourcing.
-- Nếu không có số: giữ bullet ở mức quy mô/mô tả + quyết định kỹ thuật, **không** gán số giả.
+**Luật: KHÔNG ước lượng.** Số ước lượng có thể lệch nhiều → phá honesty guarantee + rủi ro khi phỏng vấn
+(interviewer hỏi ngược không defend được → mất credibility toàn CV).
+
+**Test một dòng:** *"Tôi dám bảo vệ con số này khi bị hỏi ngược không?"* — Không chắc → **bỏ số**.
+
+Một bullet **không có số vẫn đạt** luật "≥1 trong {số · quy mô · quyết định kỹ thuật}" nếu có **quy mô
+định tính** hoặc **quyết định kỹ thuật**:
+
+- **Quy mô định tính:** `multi-module`, `end-to-end (DB → UI → deploy)`, `role-based portals`,
+  `offline-capable`, `POS + payment + maps/search integrations`, `regulated fintech domain`.
+- **Quyết định kỹ thuật:** `separate DB`, `schema migration`, `transaction-management refactor`, `AES-GCM at rest`.
+- **Vai trò:** `built` / `owned` / `architected` / `from scratch`.
+- **Proxy hợp lệ nếu NHỚ:** thời lượng (`over 5 years`), team size (`with a 4-dev team`).
+
+**Cây quyết định:**
+
+```
+Có số thật (dám defend)? ── có ──▶ dùng (ghi "~" nếu là range bạn chắc)
+        │ không
+        ▼
+Dự án còn liên quan JD? ── có ──▶ giữ bullet ĐỊNH TÍNH (quy mô chữ + quyết định kỹ thuật + vai trò)
+        │ không
+        ▼
+     Nén 1 dòng HOẶC bỏ (tailor) — KHÔNG tạo "section phụ" (dễ bị đọc là padding)
+```
+
+- **KHÔNG bịa.** Placeholder `[cần xác nhận: ...]` chỉ dùng ở **bản nháp**, **phải giải quyết trước khi
+  render PDF cuối** (không để lọt vào CV gửi đi).
+- **Muốn có số thật?** Lục artefact cũ — git history, DB dump, tên khách hàng, hoá đơn, file cấu hình.
+  Có thì dùng, không thì thôi (giữ định tính).
+- **Dự án outsource/chưa thương mại** (không có user-scale thương mại): dùng proxy **định tính** ở trên;
+  chỉ thêm số nếu có artefact xác nhận.
 
 ## 5. Nguồn
 - Nội bộ: review `render_cv.py`/template + `profile.md` §4 (2026-10-06).
