@@ -19,6 +19,8 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 - `references/vn-market.md` — chuẩn CV theo loại công ty, platform, fresher, lương tham chiếu (nguồn + ngày)
 - `references/rubric.md` — rubric 100 điểm, anti-patterns, mô phỏng scan
 - `references/review-sources.md` — nguồn review bên ngoài (r/EngineeringResumes, ByteByteGo, ATS guides) + tool upload (Resumly…) + cách đối chiếu
+- `references/cv-format-ats.md` — luật format parse-safe (single-column, contact 2 dòng, font, độ dài, keyword trong ngữ cảnh)
+- `references/project-presentation.md` — luật trình bày **dự án trong Experience**: nhãn dự án ở đầu bullet, tách vai trò bằng `#### `, không gộp chức danh `/`, không `→`, không lặp quy mô, `Tech:` mỗi vai trò
 - `templates/cv-template-en.md` / `templates/cv-template-vn.md` — skeleton khi generate
 - `templates/cv-print.html` — bản A4 in PDF bằng trình duyệt
 - `scripts/render_cv.py` — render `cv/*.md` → HTML in PDF (strip mọi comment HTML kể cả nhiều dòng; contact nhiều dòng render riêng hàng; `break-inside` chống cắt entry)
@@ -62,7 +64,8 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 2. Đọc `references/best-practices.md` + phần liên quan của `references/vn-market.md`.
 3. **Gap analysis** JD ↔ kinh nghiệm: giữ gì, cắt gì, nhấn gì; chỉ ra chỗ thiếu bằng chứng.
 4. **Draft** theo `templates/cv-template-en.md` hoặc `cv-template-vn.md` (theo target).
-   - Bullet = Action + tech + kết quả; chỗ thiếu số để `[cần xác nhận: ...]`, không tự điền.
+   - Bullet = Action + tech + kết quả; chỗ thiếu số để `[cần xác nhận: ...]` (bản nháp — phải giải quyết trước khi render PDF cuối), không tự điền.
+   - Trình bày dự án theo `references/project-presentation.md`: **nhãn dự án in đậm ở đầu bullet**; nhiều vai trò trong 1 công ty tách bằng `#### `; không gộp chức danh `/`, không `→`, không lặp quy mô; `**Tech:**` riêng mỗi vai trò.
 5. **Self-score** bằng `references/rubric.md` → báo điểm + danh sách chỗ cần user xác nhận.
    - **Self-check trung thực:** `python3 .opencode/skills/vn-it-cv/scripts/selfcheck_cv.py cv/<file>.md` — fail = có evidence_id lạ, skill claim vượt bullet/`confirmed: true`, `**Tech:**` thiếu bằng chứng, hoặc header lộ placeholder → sửa trước khi báo user. Summary metric là warn-only (thêm `--strict-summary` để fail).
    - **Mô phỏng ATS:** `python3 .opencode/skills/vn-it-cv/scripts/ats_check.py cv/<file>.md` — fail = thiếu email/phone/URL, sai thứ tự section, role thiếu ngày, hoặc header còn placeholder.

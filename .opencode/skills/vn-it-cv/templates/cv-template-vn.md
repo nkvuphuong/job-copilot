@@ -35,18 +35,25 @@ Hướng dẫn điền:
 
 ## Kinh nghiệm làm việc
 
-### [Công ty] — [Chức danh] · [Bắt đầu – Kết thúc]
-[1 dòng bối cảnh: sản phẩm/domain, quy mô team]
-- [Động từ hành động] + [việc làm + công nghệ] + [kết quả đo được] <!-- e0xx -->
-- [...]
-**Tech:** [các tech THẬT SỰ dùng ở role này — mỗi cái phải có trong bullet trên hoặc `confirmed: true`]
+### [Công ty] — [Chức danh cao nhất] · [Bắt đầu – Kết thúc]
+[1 dòng bối cảnh: sản phẩm/domain, quy mô team — quy mô chỉ ghi 1 lần ở đây]
+
+#### [Chức danh] · [Bắt đầu – Kết thúc]   <!-- chỉ khi 1 công ty có nhiều vai trò; liệt kê đủ để không hở gap -->
+- **[Nhãn dự án]:** [Động từ] + [việc + quy mô] + [công nghệ] — [kết quả có số] <!-- e0xx -->
+- **[Nhãn dự án]:** [...] <!-- e0xx -->
+- **[Quản lý]:** [...] (đặt sau cùng) <!-- e0xx -->
+**Tech:** [công nghệ THẬT SỰ dùng ở vai trò này]
 
 ### [Công ty] — [Chức danh] · [Bắt đầu – Kết thúc]
-- [...]
+- **[Nhãn dự án]:** [...] <!-- e0xx -->
 **Tech:** [...]
 
-## Dự án
-<!-- Fresher: đưa lên trước Kinh nghiệm làm việc -->
+<!-- Luật: nhãn dự án in đậm ở đầu bullet; KHÔNG gộp chức danh bằng "/"; KHÔNG dùng "→" (viết "từ X sang Y");
+     không lặp quy mô; mỗi vai trò 1 dòng Tech. Chi tiết: references/project-presentation.md. -->
+
+## Dự án cá nhân
+<!-- CHỈ dự án cá nhân/open-source/độc lập — dự án công ty nằm trong Kinh nghiệm (references/project-presentation.md).
+     Fresher: đưa lên trước Kinh nghiệm. Senior: bỏ nếu Kinh nghiệm đã đủ mạnh. -->
 ### [Tên dự án] — [link nếu có]
 [1 dòng mục tiêu] · Công nghệ: [...]
 - [Đóng góp cá nhân + kết quả] <!-- e1xx -->

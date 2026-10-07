@@ -12,6 +12,7 @@ understands the fixed shape emitted by the vn-it-cv templates:
     <blank>
     ## Section
     ### Heading            (company / role heading, or plain heading)
+    #### Sub-role heading   (multi-role employer; its own bullets + **Tech:**)
     <context line>         -> rendered as .meta (immediately after an ###)
     - bullet
     - bullet <!-- e001 -->  (evidence comments are stripped)
@@ -50,6 +51,7 @@ _HEAD = """<!DOCTYPE html>
   .contact a {{ color:var(--muted); text-decoration:none; }}
   h2 {{ font-size:13px; text-transform:uppercase; letter-spacing:1.1px; color:var(--accent); margin:16px 0 6px; border-bottom:1px solid var(--rule); padding-bottom:3px; }}
   h3 {{ font-size:14px; margin:10px 0 1px; break-after: avoid; }}
+  h4 {{ font-size:13px; margin:8px 0 1px; color:var(--accent); break-after: avoid; }}
   .meta {{ color:var(--muted); font-size:12px; margin:0 0 4px; break-after: avoid; }}
   ul {{ margin:4px 0 8px; padding-left:18px; }}
   li {{ margin-bottom:3px; break-inside: avoid; }}
@@ -78,7 +80,7 @@ def _inline(text: str) -> str:
 
 
 _ENTRY_HEADING_SECTIONS = ("education", "certifications", "certifications and languages",
-                           "languages", "projects", "selected achievements")
+                           "languages", "projects", "side projects", "selected achievements")
 
 
 def _is_entry_heading(section: str) -> bool:
@@ -150,7 +152,13 @@ def render(md_path: Path) -> str:
         s = line.strip()
         if not s:
             continue
-        if s.startswith("### "):
+        if s.startswith("#### "):
+            if mode == "ul":
+                out.append("</ul>")
+                mode = None
+            pending_meta = False
+            out.append(f"<h4>{_inline(s[5:].strip())}</h4>")
+        elif s.startswith("### "):
             if mode == "ul":
                 out.append("</ul>")
                 mode = None

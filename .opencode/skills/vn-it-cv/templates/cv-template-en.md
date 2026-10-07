@@ -36,19 +36,25 @@ Hướng dẫn điền:
 
 ## Experience
 
-### [Company] — [Title] · [Start – End]
-[1 dòng context: sản phẩm/domain, team size, scope nếu hữu ích]
-- [Action verb] + [việc làm + tech] + [kết quả có số] <!-- e0xx -->
-- [...]
-- [...]
-**Tech:** [các tech THẬT SỰ dùng ở role này — mỗi cái phải có trong bullet trên hoặc `confirmed: true`]
+### [Company] — [Highest title] · [Start – End]
+[1-line context: product/domain, team size, scale — write scale ONCE, here]
+
+#### [Title] · [Start – End]        <!-- only when one company had several roles; list all so no gap shows -->
+- **[Project label]:** [Action verb] + [what + scale] + [tech] — [measurable result] <!-- e0xx -->
+- **[Project label]:** [...] <!-- e0xx -->
+- **[Management]:** [...] (put last) <!-- e0xx -->
+**Tech:** [techs actually used in THIS role]
 
 ### [Company] — [Title] · [Start – End]
-- [...]
+- **[Project label]:** [...] <!-- e0xx -->
 **Tech:** [...]
 
-## Projects
-<!-- Fresher/junior: đưa section này LÊN TRƯỚC Experience. Senior: có thể bỏ nếu experience đã đủ mạnh. -->
+<!-- Rules: project label bold at bullet start; never join titles with "/"; no "→" (use "from X to Y");
+     no repeated scale; one Tech line per role. Full detail: references/project-presentation.md. -->
+
+## Side Projects
+<!-- Personal / open-source / independent work ONLY — company projects live in Experience (references/project-presentation.md).
+     Fresher/junior: move this section ABOVE Experience. Senior: drop it if Experience is already strong. -->
 ### [Project name] — [link]
 [1 dòng mục tiêu project] · Stack: [...]
 - [Đóng góp cá nhân + kết quả] <!-- e1xx -->

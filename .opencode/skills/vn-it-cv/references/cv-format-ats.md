@@ -26,6 +26,7 @@
 - **Tên file chuyên nghiệp:** `NguyenVanA-Backend-2026.pdf`, không `CV.pdf`, không `cv-final-final.pdf`.
 - **Bullet:** ≤2 dòng (r/ER cho ≤2–3); solid circle/square; không bullet lồng.
 - **Keyword trong ngữ cảnh:** mỗi vị trí kết bằng `**Tech:** [...]` (tech thật dùng ở role đó) — keyword trong Experience được ATS/recruiter đánh giá cao hơn chỉ nằm ở Skills. Mỗi tech phải có trong bullet của role hoặc `confirmed: true` (selfcheck check #5).
+- **Dự án có nhãn + tách vai trò:** mỗi bullet dự án mở bằng **nhãn dự án in đậm**; công ty nhiều vai trò dùng `#### ` (không gộp chức danh `/`, không `→`, không lặp quy mô). Chi tiết: `project-presentation.md`.
 - **Skills phân tầng:** dòng `**Core:**` đầu tiên (3–6 skill khớp JD nhất), rồi mới tới các nhóm Backend/Frontend/Databases/Cloud.
 - **Ngắt trang:** CSS `h3 { break-after: avoid }` + `.meta { break-after: avoid }` + `li { break-inside: avoid }` — không để entry bị cắt đôi hoặc dính chữ khi sang trang.
 
