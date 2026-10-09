@@ -190,4 +190,92 @@ jc prep show <job_id>                             # JSON: prep + rounds
 ## Open Questions (B5.1)
 
 Không còn.
+
+---
+
+# Phase B8/B9 — Market research + Profile sync (delta)
+
+> v1 + B5.1 + B7 xong. B8/B9 là **backlog** (`ROADMAP.md`); delta dưới đây chốt DB/UI/skill khi triển khai.
+> Nguyên tắc không đổi: **file = nội dung** (agent sở hữu), **DB = state** (người sở hữu), **không auto-apply/publish**.
+
+## B8 — Market research → GAP → learning roadmap
+
+### Objective
+Khảo sát thị trường theo tiêu chí người dùng định nghĩa → snapshot demand → diff với `profile.md` §3
+→ GAP kỹ năng/kiến thức → lộ trình phát triển (roadmap.sh có sẵn là ưu tiên; fallback "Learn with AI"
+của roadmap.sh, hoặc lộ trình nội bộ tự thiết kế).
+
+### Data Model mới (1 bảng)
+| Bảng | Vai trò | Cột chính |
+|---|---|---|
+| `market_snapshots` | 1 lần khảo sát | `id` PK, `created_at`, `criteria_json`, `counts_json`, `top_skills_json`, `salary_json`, `run_ids_json` |
+
+`top_skills_json` = `[{skill, required_pct, nice_pct}]`; `salary_json` = band theo level/location;
+`run_ids_json` = các `runs` đã dùng. **Snapshot append-only** (bất biến) để so trend theo thời gian.
+
+### Commands mới
+```bash
+jc market scan --criteria '{"role":"backend","location":"HCM","remote":true,"level":"senior","sample":100}'
+jc market report [--snapshot <id>]            # top-skills + salary band + seniority/remote ratio
+jc gap [--snapshot <id>] [--target <role>]    # GAP vs profile.md §3 (+ % demand)
 ```
+
+### Skill + nội dung
+- `.opencode/skills/market-research/` — orchestration (định nghĩa tiêu chí → tổng hợp → GAP → lộ trình).
+- `roadmaps/<slug>.md` (agent sở hữu): stage → resource → mini-project → success-check; ghi **nguồn**
+  (roadmap.sh có sẵn / Learn-with-AI / nội bộ) + ngày. **Không copy nguyên văn** roadmap.sh (CC BY-NC-SA).
+
+### UI mới
+- Tab **Market**: bar top-skills (required/nice), salary band, bảng GAP
+  (skill · %demand · trạng thái profile · link roadmap).
+
+### Success Criteria (B8)
+1. 1 tiêu chí → 1 row `market_snapshots` với top-skills %, salary band, seniority/remote ratio.
+2. `jc gap` liệt kê đúng skill demanded mà `profile.md` thiếu / `confirmed:false` / `exploring`, kèm % demand.
+3. Mỗi gap có ≥1 lộ trình (`roadmaps/<slug>.md`) + lý do + nguồn.
+4. Snapshot append-only: chạy 2 lần tạo 2 row, không ghi đè.
+
+### Boundaries (B8)
+- **Never:** copy nguyên văn roadmap.sh; auto-apply; bịa skill/demand.
+- **Ask first:** đổi schema `market_snapshots`; thêm nguồn ngoài roadmap.sh.
+
+## B9 — Profile sync lên nền tảng
+
+### Objective
+`profile.md` = SoT → sinh "profile pack" tuỳ biến từng nền tảng → người paste → theo dõi sync + drift.
+
+### Data Model mới (1 bảng)
+| Bảng | Vai trò | Cột chính |
+|---|---|---|
+| `profile_sync` | 1 nền tảng | `platform` PK, `path`, `profile_hash`, `last_synced_at`, `status`, `notes` |
+
+`profile_hash` = hash phần SoT của `profile.md` tại lần sync; khác hash hiện tại ⇒ "cần re-sync" (drift).
+
+### Commands mới
+```bash
+jc sync status                        # platform · last_synced_at · drift (hash mismatch)
+jc sync mark <platform> [--at <date>] # đánh dấu đã sync + lưu profile_hash hiện tại
+jc sync drift                         # liệt kê nền tảng cần cập nhật
+```
+
+### Skill + nội dung
+- `.opencode/skills/profile-sync/` — orchestration (sinh pack theo nền tảng + giới hạn ký tự + checklist).
+- `sync/<platform>.md` (agent sở hữu): block copy-paste. MVP: **LinkedIn, ITViec, GitHub**.
+- **Automation:** MVP = pack + paste thủ công. Optional (sau): browser **prefill** (chrome-devtools MCP,
+  dừng trước nút Save). **Non-goal:** auto-publish.
+
+### UI mới
+- Panel **Profile sync**: platform · lần sync cuối · cờ drift · "view pack".
+
+### Success Criteria (B9)
+1. 1 profile → ≥3 `sync/<platform>.md` (LinkedIn/ITViec/GitHub), nội dung lấy từ `profile.md`, có giới hạn ký tự.
+2. `jc sync mark` lưu `profile_sync` + `profile_hash`; `jc sync drift` báo đúng khi `profile.md` đổi sau sync.
+3. UI panel hiện đúng trạng thái + mở pack.
+
+### Boundaries (B9)
+- **Never:** auto-publish lên nền tảng; bịa nội dung không có trong `profile.md`.
+- **Ask first:** thêm nền tảng ngoài MVP; bật browser prefill.
+
+## Open Questions (B8/B9)
+- B8: "Learn with AI" của roadmap.sh có endpoint ổn định để fetch không? (verify khi làm B8.3.)
+- B9: format `sync/<platform>.md` — block theo field hay theo section? (chốt khi làm B9.1.)
