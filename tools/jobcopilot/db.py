@@ -7,7 +7,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DB = REPO_ROOT / "jobcopilot.db"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 STATUSES = ("saved", "applied", "screen", "tech", "onsite",
             "offer", "rejected", "ghosted", "closed")
@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS run_items (
 CREATE TABLE IF NOT EXISTS cv_versions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   job_id TEXT REFERENCES jobs(id) ON DELETE CASCADE,
-  lang TEXT, path TEXT, created_at TEXT, hash TEXT, is_current INTEGER DEFAULT 1
+  lang TEXT, path TEXT, created_at TEXT, hash TEXT, profile_ver TEXT,
+  is_current INTEGER DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS idx_jobs_dedupe ON jobs(dedupe_key);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
@@ -84,7 +85,42 @@ def connect(path=DEFAULT_DB) -> sqlite3.Connection:
 
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    _migrate(conn)
     conn.commit()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns introduced after the first schema (idempotent)."""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(cv_versions)")}
+    if "profile_ver" not in cols:
+        conn.execute("ALTER TABLE cv_versions ADD COLUMN profile_ver TEXT")
+
+
+def profile_ver(profile_text: str) -> str:
+    """Hash of the *projection-relevant* parts of profile.md — the sections CVs
+    are built from: §1b Positioning, §3 Skills, §4 Experiences, §5 Projects.
+    Edits to unrelated prose (§0 notes, §2 wording) do NOT change this hash, so
+    CVs are only flagged stale when the material they project from actually moved."""
+    import hashlib
+    import re
+    parts = []
+    for head in ("Positioning", "Skills", "Experiences", "Projects"):
+        m = re.search(rf"##\s+\d+b?\.\s+{head}[^\n]*\n(.*?)(?=\n##\s|\Z)", profile_text, re.S)
+        if m:
+            parts.append(m.group(1))
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:12]
+
+
+def stale_cvs(conn: sqlite3.Connection, current_ver: str) -> list[dict]:
+    """CVs of still-active jobs whose stored `profile_ver` differs from now.
+    Archived/rejected jobs are ignored (their CVs are not maintained)."""
+    rows = conn.execute(
+        "SELECT cv.job_id, cv.path, cv.profile_ver, cv.hash, j.company, j.title, j.status "
+        "FROM cv_versions cv JOIN jobs j ON j.id = cv.job_id "
+        "WHERE j.status NOT IN ('closed', 'rejected', 'ghosted') "
+        "AND COALESCE(cv.profile_ver, '') <> ? "
+        "ORDER BY cv.job_id", (current_ver,)).fetchall()
+    return [dict(r) for r in rows]
 
 
 def upsert_job(conn: sqlite3.Connection, fields: dict) -> str:
@@ -105,6 +141,20 @@ def upsert_job(conn: sqlite3.Connection, fields: dict) -> str:
 
 def get_job(conn: sqlite3.Connection, job_id: str):
     return conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+
+
+def delete_job(conn: sqlite3.Connection, job_id: str) -> bool:
+    """Delete a job row; children (job_events / run_items / cv_versions / prep /
+    prep_rounds) go with it via ON DELETE CASCADE. Returns False if not found.
+
+    Content files (`jobs/*.md`, `prep/*.md`) are NOT touched here — the caller
+    (cli `rm --files`) removes them explicitly. DB state only."""
+    row = conn.execute("SELECT id FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if row is None:
+        return False
+    conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+    conn.commit()
+    return True
 
 
 def set_status(conn, job_id: str, to: str, *, at: str | None = None,
@@ -152,23 +202,24 @@ def add_run_item(conn, run_id: int, job_id: str, disposition: str) -> None:
 
 def add_cv_version(conn, job_id: str, lang: str, path: str, *,
                    created_at: str | None = None, sha: str = "",
-                   is_current: int = 1) -> int:
-    """Idempotent on (job_id, path): re-running never duplicates a CV row."""
+                   profile_ver: str = "", is_current: int = 1) -> int:
+    """Idempotent on (job_id, path): re-running never duplicates a CV row.
+    `profile_ver` records which profile version this CV was built from (drift check)."""
     created_at = created_at or date.today().isoformat()
     if is_current:
         conn.execute("UPDATE cv_versions SET is_current = 0 WHERE job_id = ?", (job_id,))
     row = conn.execute("SELECT id FROM cv_versions WHERE job_id = ? AND path = ?",
                        (job_id, path)).fetchone()
     if row:
-        conn.execute("UPDATE cv_versions SET lang=?, created_at=?, hash=?, is_current=? "
-                     "WHERE id=?",
-                     (lang, created_at, sha, is_current, row["id"]))
+        conn.execute("UPDATE cv_versions SET lang=?, created_at=?, hash=?, profile_ver=?, "
+                     "is_current=? WHERE id=?",
+                     (lang, created_at, sha, profile_ver, is_current, row["id"]))
         cid = row["id"]
     else:
         cid = conn.execute(
-            "INSERT INTO cv_versions (job_id, lang, path, created_at, hash, is_current) "
-            "VALUES (?,?,?,?,?,?)",
-            (job_id, lang, path, created_at, sha, is_current),
+            "INSERT INTO cv_versions (job_id, lang, path, created_at, hash, profile_ver, "
+            "is_current) VALUES (?,?,?,?,?,?,?)",
+            (job_id, lang, path, created_at, sha, profile_ver, is_current),
         ).lastrowid
     conn.commit()
     return cid

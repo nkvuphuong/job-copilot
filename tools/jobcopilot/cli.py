@@ -34,6 +34,10 @@ def _row_to_dict(row) -> dict:
     return {k: row[k] for k in row.keys()} if row is not None else None
 
 
+def _profile_text() -> str:
+    return (db.REPO_ROOT / "profile.md").read_text(encoding="utf-8")
+
+
 def cmd_init(args) -> int:
     conn = db.connect(args.db)
     db.init_schema(conn)
@@ -163,7 +167,57 @@ def cmd_prep(args) -> int:
 
 def cmd_report(args) -> int:
     conn = db.connect(args.db)
-    print(_dump(db.report(conn)))
+    db.init_schema(conn)
+    rep = db.report(conn)
+    cur = db.profile_ver(_profile_text())
+    rep["profile_ver"] = cur
+    rep["stale_cvs"] = db.stale_cvs(conn, cur)
+    print(_dump(rep))
+    return 0
+
+
+def cmd_profile_ver(args) -> int:
+    print(_dump({"profile_ver": db.profile_ver(_profile_text())}))
+    return 0
+
+
+def cmd_cv_add(args) -> int:
+    import hashlib
+    conn = db.connect(args.db)
+    db.init_schema(conn)
+    if db.get_job(conn, args.job_id) is None:
+        print(_dump({"error": "not found", "job_id": args.job_id}))
+        return 1
+    p = Path(args.path)
+    if not p.exists():
+        print(_dump({"error": "cv file not found", "path": args.path}))
+        return 2
+    sha = hashlib.sha256(p.read_bytes()).hexdigest()[:12]
+    cur = db.profile_ver(_profile_text())
+    cid = db.add_cv_version(conn, args.job_id, args.lang, args.path,
+                            sha=sha, profile_ver=cur)
+    print(_dump({"status": "registered", "cv_id": cid, "job_id": args.job_id,
+                 "path": args.path, "hash": sha, "profile_ver": cur}))
+    return 0
+
+
+def cmd_rm(args) -> int:
+    conn = db.connect(args.db)
+    job = db.get_job(conn, args.job_id)
+    if job is None:
+        print(_dump({"error": "not found", "job_id": args.job_id}))
+        return 1
+    removed = []
+    if args.files:
+        for rel in (f"jobs/{args.job_id}.md", f"prep/{args.job_id}.md"):
+            p = db.REPO_ROOT / rel
+            if p.exists():
+                p.unlink()
+                removed.append(rel)
+    db.delete_job(conn, args.job_id)
+    print(_dump({"status": "removed", "job_id": args.job_id,
+                 "title": job["title"], "company": job["company"],
+                 "files_removed": removed}))
     return 0
 
 
@@ -274,6 +328,17 @@ def cmd_selfcheck(args) -> int:
         assert got == want, f"case {i} {fn.__name__}{inargs} -> {got!r} != {want!r}"
     assert dedupe_key(url="https://a.com/x") == "url:https://a.com/x"
     assert dedupe_key() == ""
+    # rm cascade: children (events/cv/prep) go with the job; unknown -> False
+    c = db.connect(":memory:")
+    db.init_schema(c)
+    db.upsert_job(c, {"id": "x", "source": "t", "title": "T"})
+    db.set_status(c, "x", "closed")
+    db.add_cv_version(c, "x", "en", "cv/x-en.md")
+    assert db.delete_job(c, "x") is True
+    assert db.get_job(c, "x") is None
+    for t in ("job_events", "cv_versions"):
+        assert c.execute(f"SELECT COUNT(*) n FROM {t}").fetchone()["n"] == 0, t
+    assert db.delete_job(c, "x") is False
     print("SELFCHECK OK")
     return 0
 
@@ -321,6 +386,17 @@ def main(argv=None) -> int:
 
     sub.add_parser("report", help="funnel + backlog + follow-ups (from DB)")
 
+    sub.add_parser("profile-ver", help="print current profile.md projection hash")
+    p_cv = sub.add_parser("cv-add", help="register a tailored CV (records hash + profile_ver)")
+    p_cv.add_argument("job_id")
+    p_cv.add_argument("path")
+    p_cv.add_argument("--lang", default="en")
+
+    p_rm = sub.add_parser("rm", help="delete a job (row + children); --files removes jobs/prep .md")
+    p_rm.add_argument("job_id")
+    p_rm.add_argument("--files", action="store_true",
+                      help="also delete jobs/<id>.md and prep/<id>.md")
+
     p_prep = sub.add_parser("prep", help="interview prep status + mock round log")
     prep_sub = p_prep.add_subparsers(dest="action", required=True)
     po = prep_sub.add_parser("open"); po.add_argument("job_id"); po.add_argument("--path")
@@ -350,6 +426,8 @@ def main(argv=None) -> int:
     table = {"init": cmd_init, "selfcheck": cmd_selfcheck, "import": cmd_import,
              "dedupe-check": cmd_dedupe_check, "add": cmd_add, "run": cmd_run,
              "status": cmd_status, "report": cmd_report, "prep": cmd_prep,
+             "rm": cmd_rm,
+             "profile-ver": cmd_profile_ver, "cv-add": cmd_cv_add,
              "export": cmd_export, "restore": cmd_restore, "backup": cmd_backup}
     try:
         return table[args.cmd](args)

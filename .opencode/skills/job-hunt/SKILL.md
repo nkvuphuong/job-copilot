@@ -72,7 +72,7 @@ Chọn cách theo source (Phase 1). **Nguồn hạng nhất là `import`** — k
 1. Lấy nội dung JD (fetch board theo `references/<source>.md`; hoặc JD user dán/import). **Parse bằng snippet thống nhất** (JSON-LD path 1 → fallback DOM path 2) trong `references/itviec.md` mục 3 khi là ITViec. Không bỏ JD chỉ vì thiếu JSON-LD.
 2. Parse thành field cấu trúc (model chính, không dùng Jev):
    `{ title, company, seniority, location, remote, salary_min/max, currency, skills_required[], skills_nice[], lang_req, years_exp }`.
-3. Board fetch hàng loạt không cần mở tab: từ 1 tab cùng origin, `fetch(url,{credentials:'include'})` + `DOMParser`.
+3. Board fetch hàng loạt không cần mở tab: từ 1 tab cùng origin, `fetch(url,{credentials:'include'})` + `DOMParser`. **Throttle 1.5s/batch ≤8 + phát hiện Cloudflare challenge (429/403)** — xem `references/fetch-policy.md`; list dùng `navigate_page` + DOM.
 
 ## Phase 4 — Score vs profile
 
@@ -188,6 +188,10 @@ python3 tools/jobcopilot/server.py         # UI: http://127.0.0.1:8765
 | List thiếu item | ITViec: phân trang `?page=N` (KHÔNG virtualized) → loop page; LinkedIn: offset `start` (xem `references/linkedin.md`) |
 | `jev 401/5xx/timeout` | Log `jev-error` → fallback: mở theo keyword structural, không chặn scan |
 | Trùng JD | `cli.py dedupe-check '<url>'` trước khi ghi (exact auto-block; fuzzy → người confirm) |
+| `fetch` 429 / `cf-mitigated: challenge` (ITViec) | Cloudflare challenge do burst — **throttle 1.5s**, batch ≤8, retry sau 5–10s; vẫn chặn → `navigate_page` + DOM. Xem `references/fetch-policy.md`. |
+| `fetch` list 403 (TopCV) | List **bắt buộc** `navigate_page` + đọc DOM; chỉ detail mới `fetch`. Xem `references/fetch-policy.md`. |
+| Nhập sai / cần xoá 1 job (reset) | `python3 tools/jobcopilot/cli.py rm <job_id> [--files]` — xoá row + children (`job_events`/`cv_versions`/`prep`…); `--files` xoá luôn `jobs/<id>.md` + `prep/<id>.md`. Không có trong file content khác. |
+| Cần reset shortlist (đổi mục tiêu) | archive = loop `cli.py status <id> --to closed` (giữ history); xoá hẳn = `cli.py rm <id> --files` |
 | DOM đổi | Ưu tiên parse `body.innerText` thay vì selector cứng |
 | Board chưa verify | `references/<source>.md` còn nhãn SKELETON → verify + cập nhật file trước khi tin kết quả |
 

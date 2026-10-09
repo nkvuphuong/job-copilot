@@ -22,6 +22,11 @@ Checks (all must pass):
    blocking legitimate union lines.
 6. header scope: the header (name/title/contact) must not leak template
    placeholders/comments (`[`, `]`, `<!--`, `TODO`).
+7. coverage (profile -> CV, warn-only, whole-set runs only): evidence ids defined
+   in profile.md §4/§5 that appear on NO CV and are not declared
+   `<!-- omit: e0xx (reason) -->` are reported. This is the reverse of check #1 —
+   it catches evidence silently dropped from every CV (e.g. an enriched bullet
+   that never made it onto a CV).
 
 Usage:
     python3 selfcheck_cv.py                 # all cv/*-en.md + cv/*-vn.md
@@ -302,9 +307,13 @@ def check(cv: Path, profile_text: str, strict_summary: bool = False):
     warnings = []
     text = cv.read_text(encoding="utf-8")
 
-    # 1. evidence ids
-    used = set(re.findall(r"<!--\s*(e\d{3})\s*-->", text))
-    known = set(re.findall(r"\[(e\d{3})\]", profile_text))
+    # 1. evidence ids (support multi-id comments like `<!-- e010,e025 -->`)
+    used = set()
+    for blk in re.findall(r"<!--(.*?)-->", text, re.S):
+        if re.match(r"\s*omit:", blk):
+            continue
+        used |= set(re.findall(r"\be\d{3}\b", blk))
+    known = set(re.findall(r"\be\d{3}\b", profile_text))
     for e in sorted(used - known):
         problems.append(f"evidence {e} not in profile.md")
 
@@ -339,11 +348,19 @@ def main(argv):
     argv = [a for a in argv if a != "--strict-summary"]
     profile_text = PROFILE.read_text(encoding="utf-8")
     # default: every real tailored CV. Skip `_*` (templates/examples shipped in the repo).
+    run_all = not argv
     targets = [Path(a) for a in argv] or sorted(
         p for p in (ROOT / "cv").glob("*.md") if not p.name.startswith("_")
     )
     failed = False
+    all_used, all_omitted = set(), set()
     for cv in targets:
+        text = cv.read_text(encoding="utf-8")
+        for blk in re.findall(r"<!--(.*?)-->", text, re.S):
+            if re.match(r"\s*omit:", blk):
+                all_omitted |= set(re.findall(r"\be\d{3}\b", blk))
+            else:
+                all_used |= set(re.findall(r"\be\d{3}\b", blk))
         problems, warnings = check(cv, profile_text, strict)
         for w in warnings:
             print(f"warn {cv.name}: {w}")
@@ -354,6 +371,22 @@ def main(argv):
                 print(f"   - {p}")
         else:
             print(f"ok   {cv.name}")
+
+    # 7. coverage (profile -> CV): profile evidence on NO CV and not declared omitted.
+    #    Only meaningful when the whole CV set is checked (a single CV is a subset).
+    if run_all:
+        # global omission ledger (coverage is a whole-portfolio property, so
+        # deliberate drops are declared once, not per CV)
+        ledger = ROOT / "cv" / "_omitted.md"
+        if ledger.exists():
+            all_omitted |= set(re.findall(r"\be\d{3}\b", ledger.read_text(encoding="utf-8")))
+        known = set(re.findall(r"\be\d{3}\b", profile_text))
+        orphans = sorted(known - all_used - all_omitted)
+        if orphans:
+            print(f"warn coverage: {len(orphans)} evidence in profile.md on no CV "
+                  f"(add a bullet, or declare in cv/_omitted.md): {', '.join(orphans)}")
+        else:
+            print("ok   coverage: every profile evidence is on a CV or declared omitted")
     return 1 if failed else 0
 
 

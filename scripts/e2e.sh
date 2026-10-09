@@ -62,6 +62,10 @@ Steps that WOULD run with --run:
                   import --no-strip must not wipe stripped rows; unicode round-trip
   P5b export:     export json/csv(zip, 7 tables)/md; csv w/o --out -> 2;
                   restore -> report + all table counts match; backup opens, row parity
+  P5c rm:         rm --files removes row + cascaded children + jobs/prep .md;
+                  rm unknown -> 1
+  P5d profile_ver: profile-ver is 12-hex; cv-add stores profile_ver; report
+                  exposes profile_ver + stale_cvs
   P6  vn-it-cv:   selfcheck_cv.py all -> exit 0; 2 temp negative CVs -> exit 1;
                   render_cv.py -> html with <header>, no <!-- comments
   P7  cleanup:    kill server; remove temp (unless --keep); assert real tree unchanged
@@ -257,6 +261,29 @@ print(sum(1 for x in t if a.execute(f'select count(*) from {x}').fetchone()[0]!=
   assert_eq "all table counts match after restore" "$rcounts" "0"
   python3 "$CLI_REL" backup --out "$EX/b.bak" >/dev/null; assert_true "backup" $?
   assert_eq "backup opens + row parity" "$(python3 -c "import sqlite3;print(sqlite3.connect('$EX/b.bak').execute('select count(*) from jobs').fetchone()[0])")" "$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute('select count(*) from jobs').fetchone()[0])")"
+
+  step "P5c rm (delete job + children + files)"
+  printf -- '# rm cue card\nx\n' > "prep/2026-10-import-acme-be-r2.md"
+  python3 "$CLI_REL" prep open 2026-10-import-acme-be-r2 >/dev/null; assert_true "prep open for rm" $?
+  python3 "$CLI_REL" rm 2026-10-import-acme-be-r2 --files >/dev/null; assert_true "rm --files" $?
+  local gone; gone=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select count(*) from jobs where id='2026-10-import-acme-be-r2'\").fetchone()[0])")
+  assert_eq "rm removed row" "$gone" "0"
+  local orphan; orphan=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select count(*) from prep where job_id='2026-10-import-acme-be-r2'\").fetchone()[0])")
+  assert_eq "rm cascaded child prep" "$orphan" "0"
+  [ -f "prep/2026-10-import-acme-be-r2.md" ] && bad "rm --files left prep file" || ok "rm --files removed prep file"
+  python3 "$CLI_REL" rm nope >/dev/null 2>&1
+  assert_eq "rm unknown -> 1" "$?" "1"
+
+  step "P5d profile_ver + cv-add"
+  local pv; pv=$(python3 "$CLI_REL" profile-ver | python3 -c "import sys,json;print(json.load(sys.stdin)['profile_ver'])")
+  assert_eq "profile-ver is 12-hex" "${#pv}" "12"
+  printf -- '# e2e cv\nx\n' > "cv/_e2e-en.md"
+  python3 "$CLI_REL" cv-add 2026-10-import-acme-be cv/_e2e-en.md >/dev/null; assert_true "cv-add" $?
+  local cvpv; cvpv=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select profile_ver from cv_versions where path='cv/_e2e-en.md'\").fetchone()[0])")
+  assert_eq "cv-add stored profile_ver" "$cvpv" "$pv"
+  python3 "$CLI_REL" report | python3 -c "import sys,json;d=json.load(sys.stdin);assert d['profile_ver']=='$pv';assert 'stale_cvs' in d"
+  assert_true "report exposes profile_ver + stale_cvs" $?
+  rm -f "cv/_e2e-en.md"
 
   step "P6 vn-it-cv"
   if [ -f profile.md ]; then

@@ -107,6 +107,7 @@ async (url) => {
 
 ## 4. Gotchas
 
+- **List `fetch` → 403 (anti-bot):** `/tim-viec-lam-<kw>?type_keyword=1&page=N` chặn `fetch`; phải **`navigate_page` + đọc DOM**. **Detail `fetch` vẫn 200** (throttle 1.5s). Chi tiết + snippet: `fetch-policy.md`.
 - URL detail: `https://www.topcv.vn/viec-lam/<slug>/<id>.html` — id là segment **trước `.html`** (không phải số cuối path). `extract_external_id()` đã hỗ trợ pattern này.
 - `.title a` href dính `?ta_source=&u_sr_id=` → cắt `?` trước khi lưu; hai param đã được loc trong `_TRACKING`.
 - Salary đa số ẩn (`Thoả thuận`).

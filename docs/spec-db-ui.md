@@ -250,6 +250,7 @@ jc gap [--snapshot <id>] [--target <role>]    # GAP vs profile.md §3 (+ % deman
 | `profile_sync` | 1 nền tảng | `platform` PK, `path`, `profile_hash`, `last_synced_at`, `status`, `notes` |
 
 `profile_hash` = hash phần SoT của `profile.md` tại lần sync; khác hash hiện tại ⇒ "cần re-sync" (drift).
+**Dùng chung** helper `db.profile_ver(profile_text)` (hash các section projection-relevant: §1b/§3/§4/§5) — cùng cơ chế với `cv_versions.profile_ver` (drift CV ↔ profile).
 
 ### Commands mới
 ```bash

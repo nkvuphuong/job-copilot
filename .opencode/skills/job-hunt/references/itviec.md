@@ -115,6 +115,7 @@ async (url) => {
 
 ## 4. Gotchas
 
+- **Cloudflare challenge khi burst fetch:** fetch detail dồn dập (không delay) → sau ~12 request trả **429** với header `cf-mitigated: challenge` (body là trang *"Just a moment..."*, KHÔNG phải JSON-LD). Throttle **1.5s + batch ≤8 + retry**; vẫn chặn → `navigate_page`. Chi tiết + snippet: `fetch-policy.md`.
 - Company logo link có thể **rỗng text** → chọn `a[href*="/companies/"]` có text.
 - Level filter không có link sẵn → phải dùng query param `job_level_names[]`.
 - Một số JD **thiếu JSON-LD** → fallback DOM mục 3.
