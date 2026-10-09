@@ -25,9 +25,9 @@
 - **Độ dài:** 1 trang khi <10 năm; ≤2 trang cho senior/13+ năm. `ats_check.py` cảnh báo nếu >2 trang hoặc trang 2 lèo tèo.
 - **Tên file chuyên nghiệp:** `NguyenVanA-Backend-2026.pdf`, không `CV.pdf`, không `cv-final-final.pdf`.
 - **Bullet:** ≤2 dòng (r/ER cho ≤2–3); solid circle/square; không bullet lồng.
-- **Keyword trong ngữ cảnh:** mỗi vị trí kết bằng `**Tech:** [...]` (tech thật dùng ở role đó) — keyword trong Experience được ATS/recruiter đánh giá cao hơn chỉ nằm ở Skills. Mỗi tech phải có trong bullet của role hoặc `confirmed: true` (selfcheck check #5).
+- **Keyword trong ngữ cảnh:** mỗi vị trí kết bằng `**Tech:** [...]` (tech thật dùng ở role đó) — keyword trong Experience được ATS/recruiter đánh giá cao hơn chỉ nằm ở Skills. Mỗi tech phải có trong bullet của role, evidence **cùng công ty**, hoặc `confirmed: true` (selfcheck check #5). **`Tech:` chỉ chứa tầng A (stack: language/framework/DB/infra/platform).** KHÔNG đưa practices (Agile/Scrum, CI/CD, TDD, DDD, Spec-Driven Development), tools (Jira/ClickUp/Confluence/Miro/Atlassian/Bitbucket) hay concepts (OOP, MVC/MVVM, Design Patterns) vào `Tech:` — chúng thuộc nhóm Skills riêng (xem dòng dưới).
 - **Dự án có nhãn + tách vai trò:** mỗi bullet dự án mở bằng **nhãn dự án in đậm**; công ty nhiều vai trò dùng `#### ` (không gộp chức danh `/`, không `→`, không lặp quy mô). Chi tiết: `project-presentation.md`.
-- **Skills phân tầng:** dòng `**Core:**` đầu tiên (3–6 skill khớp JD nhất), rồi mới tới các nhóm Backend/Frontend/Databases/Cloud.
+- **Skills phân tầng:** dòng `**Core:**` đầu tiên (3–6 skill khớp JD nhất), rồi mới tới các nhóm Backend/Frontend/Databases/Cloud. Tách **stack** (tầng A) khỏi **`**Practices:**`** (Agile/Scrum/Kanban, CI/CD, code review, TDD/DDD/Spec-Driven Development) và **`**Tools:**`** (Git, Bitbucket, Grafana…). **Tools chỉ list khi JD nhắc** (trừ VCS/monitoring đã dùng xuyên suốt). **Concepts/paradigm (OOP, MVC, Design Patterns, SOLID) KHÔNG liệt kê** — kỳ vọng mặc định; list ra bị đọc là junior/padding.
 - **Ngắt trang:** CSS `h3 { break-after: avoid }` + `.meta { break-after: avoid }` + `li { break-inside: avoid }` — không để entry bị cắt đôi hoặc dính chữ khi sang trang.
 
 ## 4. Bullet content (impact)

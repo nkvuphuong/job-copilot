@@ -56,6 +56,9 @@ Print-on-Demand B2B SaaS for the US market · 350+ employees · 3M+ orders/year.
 3. **Không lặp thông tin quy mô** (vd "3M+ orders/year") — giữ **một lần** ở dòng context công ty.
 4. **`Tech:` riêng cho mỗi vai trò** — không dùng chung nhiều vai trò; đặt ở dòng riêng (không dính bullet).
    Tech chính của dự án có thể xuất hiện trong bullet; dòng `Tech:` là hợp nhất của vai trò đó.
+   **Chỉ chứa tầng A (stack: language/framework/DB/infra/platform).** KHÔNG đưa practices
+   (Agile/CI-CD/TDD/DDD/Spec-Driven Development), tools (Jira/Bitbucket/…) hay concepts (OOP/MVC/Design
+   Patterns) vào `Tech:` — chúng thuộc nhóm Skills riêng (`cv-format-ats.md` §3).
 5. **Thứ tự bullet theo độ liên quan**: dự án/kết quả lớn nhất trước, mảng **quản lý** (review/hiring/KPI)
    đặt **sau cùng**.
 6. **Viết tắt định nghĩa ở lần đầu**: `Order Management System (OMS)`, `Profit & Loss (PnL)`,

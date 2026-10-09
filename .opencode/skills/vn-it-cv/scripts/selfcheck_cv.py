@@ -14,8 +14,12 @@ Checks (all must pass):
    should trace to profile.md. Reported as warnings unless --strict-summary.
 4. experience order: `## Experience` entries must be reverse-chronological
    (newest start date first) — catches a newer role appended below older ones.
-5. per-role Tech line: every tech in a `**Tech:**` line must appear in that
-   role's own bullets OR be a `confirmed: true` skill in profile.md §3.
+5. per-role Tech line: every tech in a `**Tech:**` line must be backed by that
+   role's own bullets, OR by another bullet of the SAME company in profile.md §4
+   (company-scoped union), OR be a `confirmed: true` skill in profile.md §3.
+   A tech backed ONLY by a global `confirmed` skill (not this company's evidence)
+   is reported as a warning (warn-first) — surfaces cross-role leakage without
+   blocking legitimate union lines.
 6. header scope: the header (name/title/contact) must not leak template
    placeholders/comments (`[`, `]`, `<!--`, `TODO`).
 
@@ -225,23 +229,64 @@ def _match(w: str, stems) -> bool:
     return False
 
 
+def _company_key(heading: str) -> str:
+    """First significant token of a company heading, for CV↔profile matching."""
+    name = heading.split("—")[0]
+    name = re.sub(r"[^a-zA-Z0-9 .]", " ", name).lower()
+    toks = [t for t in name.split() if t]
+    return toks[0] if toks else ""
+
+
+def _profile_company_stems(profile_text: str):
+    """Map company-key -> stems of every §4 bullet of that company (union).
+
+    Lets a CV role's `**Tech:**` line be backed by any bullet of the SAME company
+    (the role's true stack is the union across its projects), not only the subset
+    of bullets displayed in that one CV."""
+    out = {}
+    m = re.search(r"##\s+\d+\.\s+Experiences\s*\n(.*?)(?=\n##\s|\Z)", profile_text, re.S)
+    if not m:
+        return out
+    for blk in re.split(r"\n(?=###\s)", m.group(1)):
+        h = re.match(r"###\s+(.*)", blk)
+        if not h:
+            continue
+        key = _company_key(h.group(1))
+        if key:
+            out.setdefault(key, set()).update(_entry_stems(blk))
+    return out
+
+
 def _tech_line_problems(text: str, profile_text: str):
-    """Each `**Tech:**` entry line must be backed by that role's own text or a
-    `confirmed: true` skill — so a per-role tech list can't smuggle in claims."""
+    """Each `**Tech:**` line must be backed by (a) that role's own CV bullets,
+    (b) the SAME company's profile evidence (union across its bullets), or
+    (c) a `confirmed: true` skill. Backing by (c) alone is warn-only."""
     problems = []
+    warnings = []
     m = re.search(r"##\s+Experience\s*\n(.*?)(?=\n##\s|\Z)", text, re.S)
     if not m:
-        return problems
+        return problems, warnings
     confirmed = _confirmed_tokens(profile_text)
+    company_stems = _profile_company_stems(profile_text)
     for entry in re.split(r"\n(?=###\s)", m.group(1)):
         tech = re.search(r"\*\*Tech:\*\*\s*(.+)", entry)
         if not tech:
             continue
-        stems = _entry_stems(entry.replace(tech.group(0), "")) | confirmed
+        h = re.match(r"###\s+(.*)", entry)
+        cstems = company_stems.get(_company_key(h.group(1)), set()) if h else set()
+        entry_stems = _entry_stems(entry.replace(tech.group(0), ""))
         for w in sorted(set(_skills_tokens(tech.group(1)))):
-            if not _match(w, stems):
-                problems.append(f"tech '{w}' in Tech line not backed by this role's bullets/confirmed")
-    return problems
+            role_ok = _match(w, entry_stems)
+            comp_ok = _match(w, cstems)
+            conf_ok = _match(w, confirmed)
+            if role_ok or comp_ok:
+                continue
+            if conf_ok:
+                warnings.append(
+                    f"tech '{w}' in Tech line only globally confirmed — not in this company's evidence")
+            else:
+                problems.append(f"tech '{w}' in Tech line not backed by this role/company/confirmed")
+    return problems, warnings
 
 
 def _header_problems(text: str):
@@ -279,8 +324,10 @@ def check(cv: Path, profile_text: str, strict_summary: bool = False):
     # 4. experience order: newest start date first
     problems.extend(_experience_order_problems(text))
 
-    # 5. per-role `**Tech:**` lines backed by that role's bullets / confirmed skills
-    problems.extend(_tech_line_problems(text, profile_text))
+    # 5. per-role `**Tech:**` lines backed by role/company evidence (confirmed-only -> warn)
+    tp, tw = _tech_line_problems(text, profile_text)
+    problems.extend(tp)
+    warnings.extend(tw)
 
     # 6. header must not leak template placeholders / comments
     problems.extend(_header_problems(text))
