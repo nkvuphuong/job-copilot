@@ -16,13 +16,14 @@ Job-search (prefer the project-local skills):
 - Tailor / review / score a CV → `vn-it-cv`
 - Interview prep / mock → `job-hunt`
 - Track applications / compare offers → `job-hunt`
+- Update LinkedIn / ITviec / TopCV / GitHub profile → `profile-sync`
 
 ## State store (do not re-invent)
 
 Job lifecycle, identity/dedupe and scan runs live in `jobcopilot.db` (SQLite),
 not in Markdown frontmatter. The CLI/UI is the single write path:
 
-- `python3 tools/jobcopilot/cli.py dedupe-check|add|status|report|rm|profile-ver|cv-add` — agent + human
+- `python3 tools/jobcopilot/cli.py dedupe-check|add|status|report|rm|profile-ver|cv-add|sync` — agent + human
 - `python3 tools/jobcopilot/server.py` — local UI at `http://127.0.0.1:8765`
 
 Content (raw JD, CV, prep, offer, `profile.md`) stays in files; the agent owns it,

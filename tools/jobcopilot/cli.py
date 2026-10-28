@@ -181,6 +181,23 @@ def cmd_profile_ver(args) -> int:
     return 0
 
 
+def cmd_sync(args) -> int:
+    conn = db.connect(args.db)
+    db.init_schema(conn)
+    cur = db.profile_ver(_profile_text())
+    if args.action == "mark":
+        if args.platform not in db.PLATFORMS:
+            raise ValueError(f"unknown platform {args.platform}; one of {db.PLATFORMS}")
+        db.mark_sync(conn, args.platform, cur, at=args.at,
+                     path=args.path or f"sync/{args.platform}.md", notes=args.notes)
+        print(_dump({"marked": args.platform, "profile_hash": cur}))
+    elif args.action == "drift":
+        print(_dump([r for r in db.sync_status(conn, cur) if r["drift"]]))
+    else:
+        print(_dump(db.sync_status(conn, cur)))
+    return 0
+
+
 def cmd_cv_add(args) -> int:
     import hashlib
     conn = db.connect(args.db)
@@ -407,6 +424,16 @@ def main(argv=None) -> int:
     psh = prep_sub.add_parser("show"); psh.add_argument("job_id")
     prep_sub.add_parser("list")
 
+    p_sy = sub.add_parser("sync", help="profile sync state: status | mark | drift")
+    sync_sub = p_sy.add_subparsers(dest="action", required=True)
+    sync_sub.add_parser("status")
+    sync_sub.add_parser("drift")
+    sm = sync_sub.add_parser("mark")
+    sm.add_argument("platform", choices=db.PLATFORMS)
+    sm.add_argument("--at")
+    sm.add_argument("--path")
+    sm.add_argument("--notes")
+
     p_ex = sub.add_parser("export", help="dump state: json (round-trip) | csv (zip) | md")
     p_ex.add_argument("--format", choices=["json", "csv", "md"], default="json")
     p_ex.add_argument("--out", help="output file (required for csv)")
@@ -426,7 +453,7 @@ def main(argv=None) -> int:
     table = {"init": cmd_init, "selfcheck": cmd_selfcheck, "import": cmd_import,
              "dedupe-check": cmd_dedupe_check, "add": cmd_add, "run": cmd_run,
              "status": cmd_status, "report": cmd_report, "prep": cmd_prep,
-             "rm": cmd_rm,
+             "rm": cmd_rm, "sync": cmd_sync,
              "profile-ver": cmd_profile_ver, "cv-add": cmd_cv_add,
              "export": cmd_export, "restore": cmd_restore, "backup": cmd_backup}
     try:

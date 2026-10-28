@@ -241,8 +241,12 @@ jc gap [--snapshot <id>] [--target <role>]    # GAP vs profile.md §3 (+ % deman
 
 ## B9 — Profile sync lên nền tảng
 
+> **Trạng thái: ✅ xong 2026-10-28.** Chốt trong lúc làm: MVP **4 nền tảng** (thêm TopCV);
+> format **theo field**; **EN toàn bộ**; prefill **có làm** (không còn là optional) với guardrail
+> "agent không bao giờ bấm Save".
+
 ### Objective
-`profile.md` = SoT → sinh "profile pack" tuỳ biến từng nền tảng → người paste → theo dõi sync + drift.
+`profile.md` = SoT → sinh "profile pack" tuỳ biến từng nền tảng → prefill/paste → theo dõi sync + drift.
 
 ### Data Model mới (1 bảng)
 | Bảng | Vai trò | Cột chính |
@@ -261,22 +265,28 @@ jc sync drift                         # liệt kê nền tảng cần cập nh�
 
 ### Skill + nội dung
 - `.opencode/skills/profile-sync/` — orchestration (sinh pack theo nền tảng + giới hạn ký tự + checklist).
-- `sync/<platform>.md` (agent sở hữu): block copy-paste. MVP: **LinkedIn, ITViec, GitHub**.
-- **Automation:** MVP = pack + paste thủ công. Optional (sau): browser **prefill** (chrome-devtools MCP,
-  dừng trước nút Save). **Non-goal:** auto-publish.
+- `sync/<platform>.md` (agent sở hữu): block copy-paste **theo field** —
+  `## Field  <!-- limit: N -->` + một fenced block. Nền tảng MVP: **LinkedIn, ITviec, TopCV, GitHub**.
+- Gate `scripts/pack_check.py`: vượt limit ký tự / evidence id không tồn tại → exit 1 (E2E P5e).
+- **Automation:** prefill bằng `chrome-devtools` MCP (`take_snapshot` → `fill_form` → screenshot → dừng);
+  **guardrail: agent không bao giờ bấm Save/Lưu/Cập nhật/Publish/Submit** — user tự bấm.
+  Không lưu selector trong repo (dùng a11y ref của snapshot) nên nền tảng đổi UI không vỡ.
+  Upload **CV master** (`cv/master-en.md`), không upload CV tailor. **Non-goal:** auto-publish.
 
 ### UI mới
-- Panel **Profile sync**: platform · lần sync cuối · cờ drift · "view pack".
+- Panel **Profile sync** trên dashboard: platform · lần sync cuối · cờ drift · "Mở pack" · "Đã sync".
+- API: `GET /api/sync`, `GET /api/sync/<platform>[?format=html]`, `POST /api/sync/<platform>`.
 
 ### Success Criteria (B9)
-1. 1 profile → ≥3 `sync/<platform>.md` (LinkedIn/ITViec/GitHub), nội dung lấy từ `profile.md`, có giới hạn ký tự.
+1. 1 profile → **4** `sync/<platform>.md` (LinkedIn/ITviec/TopCV/GitHub), nội dung lấy từ `profile.md`, có giới hạn ký tự.
 2. `jc sync mark` lưu `profile_sync` + `profile_hash`; `jc sync drift` báo đúng khi `profile.md` đổi sau sync.
 3. UI panel hiện đúng trạng thái + mở pack.
+4. `pack_check.py` fail khi vượt limit hoặc evidence id không tồn tại.
 
 ### Boundaries (B9)
-- **Never:** auto-publish lên nền tảng; bịa nội dung không có trong `profile.md`.
-- **Ask first:** thêm nền tảng ngoài MVP; bật browser prefill.
+- **Never:** auto-publish lên nền tảng; bịa nội dung không có trong `profile.md`; agent bấm nút lưu.
+- **Ask first:** thêm nền tảng ngoài 4 nền tảng MVP; upload file khác CV master.
 
 ## Open Questions (B8/B9)
 - B8: "Learn with AI" của roadmap.sh có endpoint ổn định để fetch không? (verify khi làm B8.3.)
-- B9: format `sync/<platform>.md` — block theo field hay theo section? (chốt khi làm B9.1.)
+- B9: giới hạn ký tự / field thật của ITviec + TopCV — verify khi đăng nhập lần đầu (đang đánh dấu `chưa verify`).

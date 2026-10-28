@@ -1,19 +1,20 @@
 # Roadmap
 
-Trạng thái: **v1 (bước 1–4) đang triển khai** — DB SQLite + CLI + migrate + UI state.
+Trạng thái: **v1 + B5.1 (prep) + B7 (export/backup) + B9 (profile sync) đã xong**.
+Còn lại: B5.2 (offers), B6 (onboard/archive), B8 (market → GAP → roadmap).
 Spec: [`docs/spec-db-ui.md`](docs/spec-db-ui.md).
 
 Mục đích file này: giữ các bước **cố tình hoãn** với đủ ngữ cảnh để nhặt lên làm
 tiếp mà không phải nhớ. Mỗi mục có acceptance criteria riêng.
 
-## Đang làm — v1
+## Đã xong — v1
 
-- [ ] `tools/jobcopilot/db.py` + `identity.py` + schema (5 bảng)
-- [ ] `migrate.py`: import `jobs/*.md` frontmatter → DB, strip frontmatter
-- [ ] `cli.py`: `init` / `import` / `dedupe-check` / `add` / `run` / `status` / `report`
-- [ ] `server.py` + `ui/index.html`: dashboard + list/filter + đổi state + confirm duplicate
-- [ ] Rewire `job-hunt/SKILL.md` (Phase 2,3,5,6) + `WORKFLOW.md` (Phase 2,3,5,6 + Non-goals) sang DB
-- [ ] Cập nhật `AGENTS.md`, `README.md`, `.gitignore` (+`jobcopilot.db`)
+- [x] `tools/jobcopilot/db.py` + `identity.py` + schema
+- [x] `migrate.py`: import `jobs/*.md` frontmatter → DB, strip frontmatter
+- [x] `cli.py`: `init` / `import` / `dedupe-check` / `add` / `run` / `status` / `report`
+- [x] `server.py` + `ui/index.html`: dashboard + list/filter + đổi state + confirm duplicate
+- [x] Rewire `job-hunt/SKILL.md` (Phase 2,3,5,6) + `WORKFLOW.md` (Phase 2,3,5,6 + Non-goals) sang DB
+- [x] Cập nhật `AGENTS.md`, `README.md`, `.gitignore` (+`jobcopilot.db`)
 
 ## Backlog (bước 5–8) — chưa làm
 
@@ -89,32 +90,58 @@ hoặc **lộ trình nội bộ tự thiết kế**.
 - **Phụ thuộc:** scan + bảng `jobs` (đã có).
 - **Non-goal:** không auto-apply; không copy nguyên văn nội dung roadmap.sh.
 
-### B9. Đồng bộ profile lên nền tảng / mạng xã hội việc làm
+### B9. Đồng bộ profile lên nền tảng / mạng xã hội việc làm ✅ xong (2026-10-28)
 
 **Mục tiêu:** `profile.md` = SoT → sinh **"profile pack"** tuỳ biến theo từng nền tảng
 (tối ưu keyword/headline để **headhunter** tìm thấy) → giảm thao tác thủ công + thông tin luôn đồng bộ.
 
 **Skill mới:** `.opencode/skills/profile-sync/`.
 
-**B9.1 — Pack generator (chưa làm):**
-- **Nội dung:** `sync/<platform>.md` — block copy-paste sẵn + giới hạn ký tự + checklist.
-  Nền tảng MVP: **LinkedIn, ITViec, GitHub** (TopCV/VietnamWorks/personal site sau).
-- **Tuỳ biến:** LinkedIn (headline ≤220 ký tự, About, top skills theo market); ITViec (style VN theo
-  `vn-market.md`); GitHub (bio, README, pinned repos).
-- **Acceptance:** 1 profile → ≥3 pack; nội dung lấy từ `profile.md`, không bịa.
+**B9.1 — Pack generator ✅ xong:**
+- MVP **4 nền tảng**: LinkedIn, ITviec, **TopCV** (thêm theo yêu cầu user), GitHub.
+- Format **theo field** (`## Field  <!-- limit: N -->` + fenced block) — paste thẳng từng ô.
+- Ngôn ngữ: **EN toàn bộ** (kể cả ITviec/TopCV — chốt của user).
+- `references/platforms.md` (limit + trạng thái verify), `references/writing-style.md` (style từng nền tảng).
+- Gate: `scripts/pack_check.py` — vượt limit ký tự hoặc evidence id không tồn tại → exit 1. E2E P5e phủ.
+- Output: `sync/<platform>.md` (gitignored).
 
-**B9.2 — Sync state + drift (chưa làm):**
-- **Schema:** `profile_sync` (platform, path, profile_hash, last_synced_at, status, notes).
-- **CLI:** `jc sync status` · `jc sync mark <platform> [--at]` · `jc sync drift`
-  (hash `profile.md` vs lần sync → cờ "cần re-sync").
-- **Acceptance:** đổi `profile.md` sau sync → `jc sync drift` báo đúng nền tảng cần cập nhật.
+**B9.4 — Prefill bằng chrome-devtools MCP ✅ xong (làm trước B9.2):**
+- `references/prefill.md`: `navigate_page` → `take_snapshot` → `fill_form`/`fill` → `take_screenshot` → **dừng**.
+- **Guardrail tuyệt đối: agent KHÔNG bao giờ bấm Save/Lưu/Cập nhật/Publish/Submit** — user tự bấm.
+- Không lưu selector trong repo (dùng a11y ref của `take_snapshot`) → nền tảng đổi UI không vỡ.
+- Thứ tự: ITviec → TopCV → GitHub → LinkedIn (LinkedIn chống automation mạnh nhất, modal từng field).
+- Upload **CV master** (không phải CV tailor) qua `upload_file`, không bấm nút xác nhận.
 
-**B9.3 — UI (chưa làm):** panel **Profile sync** (platform, lần sync cuối, cờ drift, "view pack").
+**B9.2 — Sync state + drift ✅ xong:**
+- Bảng `profile_sync` (platform PK, path, profile_hash, last_synced_at, status, notes) — `SCHEMA_VERSION=3`.
+- `jc sync status` · `jc sync mark <platform>` · `jc sync drift`; tái dùng `db.profile_ver()` của `cv_versions`.
 
-- **Automation:** MVP = **sinh pack + người paste** (khớp triết lý no-auto-apply; tránh ToS/captcha).
-  **Optional (sau):** browser **prefill** qua `chrome-devtools` MCP — điền form, người bấm Save.
-- **Non-goal:** auto-publish.
-- **Phụ thuộc:** `profile.md` + `vn-it-cv` (đã có). **Drift detection đọc nền tảng (browser):** hoãn.
+**B9.3 — UI ✅ xong:** panel **Profile sync** trên dashboard (platform · lần sync cuối · cờ drift ·
+"Mở pack" · "Đã sync"); `GET /api/sync`, `GET /api/sync/<platform>[?format=html]`, `POST /api/sync/<platform>`.
+
+**Còn lại (chưa làm):**
+- `sync/github.md` — pinned repos cần user chọn (5 slot đang `[cần xác nhận]`).
+- LinkedIn prefill: chưa chạy lượt nào (giới hạn đã verify từ tài liệu, chưa verify trên form thật).
+
+**Bài học từ lượt prefill đầu (2026-10-28)** — chi tiết + luật ở
+`.opencode/skills/profile-sync/references/prefill.md` mục "Sai sót đã mắc":
+1. Pack ITviec/TopCV viết từ giả định → sai hình dạng (ITviec = CV builder + About Me 2500 ký tự;
+   TopCV không có profile text). **Snapshot trước, viết pack sau.**
+2. `Close`/`×` trên ITviec **huỷ** thay đổi, không phải lưu → mất 2 lượt điền (About Me; Title + link).
+3. `ArrowDown`+`Enter` trên combobox chọn nhầm option (`Vice President / Director`) → luôn
+   `fill` đúng nhãn rồi `Enter` + đọc lại value.
+4. ~~Native `<select>` không điền được~~ **SAI, đã sửa**: `<select>` bị **Tom Select** bọc (1×1px,
+   `tabindex=-1`). `click`/`fill`/`press_key` đều fail, nhưng điền được bằng
+   `el.tomselect.open()` → `refreshOptions(false)` → click `.option[data-value="9"]` → verify `el.value`.
+   → đừng kết luận "không điền được" trước khi thử đường của widget.
+5. Điều hướng nhiều lần trên TopCV → Cloudflare chặn phiên. **Một nền tảng một lượt, không retry.**
+6. `new_page`/`close_page` khi còn form chưa Save → **mất form** (id tab đổi sau `new_page`). Phải
+   `list_pages` + so URL/title trước khi đóng; tab đang có form = chỉ snapshot/screenshot.
+7. Chép bullet Work Experience vào Highlight Project (trùng ~90%). Project = bối cảnh/quy mô/kiến trúc/
+   vai trò/team; số liệu **kết quả** để Experience kể.
+8. Đọc counter `1441/500` thành 5000 → Cover Letter bị chặn. Lấy đúng cặp `x/y` từ DOM trước khi viết.
+
+**Non-goal:** không auto-publish. **Phụ thuộc:** `profile.md` + `vn-it-cv`.
 
 ## Ghi chú kiến trúc — Docker / chia sẻ repo
 

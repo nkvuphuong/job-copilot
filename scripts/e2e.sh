@@ -51,7 +51,7 @@ Temp clone: \$TMPDIR/jobcopilot-e2e/job-copilot   server: $HOST:$PORT
 
 Steps that WOULD run with --run:
   P0  clean-room: git clone . -> temp; assert only _example*; seed jobs/ cv/ profile.md
-  P1  setup:      cli.py init x2; assert 7 tables; assert jobcopilot.db not tracked
+  P1  setup:      cli.py init x2; assert 8 tables; assert jobcopilot.db not tracked
   P2  migrate:    cli.py import -> {jobs:13,cv_versions:13}; frontmatter stripped;
                   header+raw JD kept; .backup/=13; re-import idempotent (0 changes)
   P3  happy path: run start; dedupe exact hit / fuzzy flag; add new; add repost ->
@@ -60,12 +60,15 @@ Steps that WOULD run with --run:
                   POST status; POST duplicate clear; 404 unknown; 400 bad json (stays up)
   P5  negative:   add missing id -> exit 2; status unknown/no-tracebacks;
                   import --no-strip must not wipe stripped rows; unicode round-trip
-  P5b export:     export json/csv(zip, 7 tables)/md; csv w/o --out -> 2;
+  P5b export:     export json/csv(zip, 8 tables)/md; csv w/o --out -> 2;
                   restore -> report + all table counts match; backup opens, row parity
   P5c rm:         rm --files removes row + cascaded children + jobs/prep .md;
                   rm unknown -> 1
   P5d profile_ver: profile-ver is 12-hex; cv-add stores profile_ver; report
                   exposes profile_ver + stale_cvs
+  P5e sync:       sync status lists 4 platforms; mark then no drift; profile.md
+                  change -> drift; pack_check accepts ok, rejects over-limit /
+                  unknown evidence
   P6  vn-it-cv:   selfcheck_cv.py all -> exit 0; 2 temp negative CVs -> exit 1;
                   render_cv.py -> html with <header>, no <!-- comments
   P7  cleanup:    kill server; remove temp (unless --keep); assert real tree unchanged
@@ -134,7 +137,7 @@ run_suite() {
   python3 "$CLI_REL" init >/dev/null; assert_true "init run 1" $?
   python3 "$CLI_REL" init >/dev/null; assert_true "init run 2 (idempotent)" $?
   local tables; tables=$(python3 -c "import sqlite3;print(len([r for r in sqlite3.connect('jobcopilot.db').execute(\"select name from sqlite_master where type='table' and name not like 'sqlite_%'\")]))")
-  assert_eq "7 tables (5 v1 + prep + prep_rounds)" "$tables" "7"
+  assert_eq "8 tables (v1 + prep + prep_rounds + profile_sync)" "$tables" "8"
   grep -q '^/jobcopilot.db' .gitignore && ok "jobcopilot.db is gitignored" || bad "jobcopilot.db not in .gitignore"
 
   step "P2 migrate + strip"
@@ -245,7 +248,7 @@ run_suite() {
   python3 "$CLI_REL" export --out "$EX/state.json" >/dev/null; assert_true "export json" $?
   python3 "$CLI_REL" export --format csv --out "$EX/state.zip" >/dev/null; assert_true "export csv" $?
   local zt; zt=$(python3 -c "import zipfile;n=zipfile.ZipFile('$EX/state.zip').namelist();print(sum(1 for x in n if x.endswith('.csv')))")
-  assert_eq "csv zip has 7 table files" "$zt" "7"
+  assert_eq "csv zip has 8 table files" "$zt" "8"
   python3 "$CLI_REL" export --format csv >/dev/null 2>&1
   assert_eq "csv without --out -> 2" "$?" "2"
   python3 "$CLI_REL" export --format md >"$EX/state.md"; assert_true "export md" $?
@@ -284,6 +287,37 @@ print(sum(1 for x in t if a.execute(f'select count(*) from {x}').fetchone()[0]!=
   python3 "$CLI_REL" report | python3 -c "import sys,json;d=json.load(sys.stdin);assert d['profile_ver']=='$pv';assert 'stale_cvs' in d"
   assert_true "report exposes profile_ver + stale_cvs" $?
   rm -f "cv/_e2e-en.md"
+
+  step "P5e profile sync + pack check"
+  python3 "$CLI_REL" sync status | python3 -c "import sys,json;assert len(json.load(sys.stdin))==4"
+  assert_true "sync status lists 4 platforms" $?
+  python3 "$CLI_REL" sync mark linkedin >/dev/null; assert_true "sync mark" $?
+  python3 "$CLI_REL" sync drift | python3 -c "import sys,json;assert json.load(sys.stdin)==[]"
+  assert_true "no drift right after mark" $?
+  local pv_bak; pv_bak=$(mktemp)
+  cp profile.md "$pv_bak"
+  python3 - <<'PY'
+p = 'profile.md'
+s = open(p, encoding='utf-8').read()
+s = s.replace('## 4. Experiences',
+              '| s99 | E2E Skill | backend | familiar |  | true | e009 |\n\n## 4. Experiences', 1)
+open(p, 'w', encoding='utf-8').write(s)
+PY
+  python3 "$CLI_REL" sync drift | python3 -c "import sys,json;d=json.load(sys.stdin);assert [r['platform'] for r in d]==['linkedin']"
+  assert_true "drift after profile.md change" $?
+  mv "$pv_bak" profile.md
+
+  local PACK_CHECK_REL=".opencode/skills/profile-sync/scripts/pack_check.py"
+  mkdir -p sync
+  printf '## Headline  <!-- limit: 20 -->\n```text\nshort\n```\n' > sync/_e2e_ok.md
+  python3 "$PACK_CHECK_REL" sync/_e2e_ok.md >/dev/null 2>&1; assert_true "pack_check accepts a short field" $?
+  printf '## Headline  <!-- limit: 5 -->\n```text\ntoo long for the limit\n```\n' > sync/_e2e_over.md
+  python3 "$PACK_CHECK_REL" sync/_e2e_over.md >/dev/null 2>&1
+  assert_eq "pack_check rejects over-limit field -> 1" "$?" "1"
+  printf '## Headline  <!-- limit: 200 -->\n```text\nbuilt it [e999]\n```\n' > sync/_e2e_ev.md
+  python3 "$PACK_CHECK_REL" sync/_e2e_ev.md >/dev/null 2>&1
+  assert_eq "pack_check rejects unknown evidence -> 1" "$?" "1"
+  rm -f sync/_e2e_ok.md sync/_e2e_over.md sync/_e2e_ev.md
 
   step "P6 vn-it-cv"
   if [ -f profile.md ]; then

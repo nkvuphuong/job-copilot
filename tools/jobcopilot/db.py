@@ -7,7 +7,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DB = REPO_ROOT / "jobcopilot.db"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 STATUSES = ("saved", "applied", "screen", "tech", "onsite",
             "offer", "rejected", "ghosted", "closed")
@@ -71,9 +71,17 @@ CREATE TABLE IF NOT EXISTS prep_rounds (
   at TEXT, round_type TEXT, notes TEXT, went_well TEXT, to_fix TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_prep_rounds_job ON prep_rounds(job_id);
+CREATE TABLE IF NOT EXISTS profile_sync (
+  platform TEXT PRIMARY KEY,
+  path TEXT, profile_hash TEXT, last_synced_at TEXT,
+  status TEXT NOT NULL DEFAULT 'synced', notes TEXT
+);
 """
 
 PREP_STATUSES = ("draft", "ready", "done")
+
+# B9: platforms with a `sync/<platform>.md` pack.
+PLATFORMS = ("linkedin", "itviec", "topcv", "github")
 
 
 def connect(path=DEFAULT_DB) -> sqlite3.Connection:
@@ -273,6 +281,31 @@ def get_prep(conn, job_id: str) -> dict | None:
 _APPLIED_STATUSES = {"applied", "screen", "tech", "onsite", "offer"}
 
 
+# --- B9: profile sync -------------------------------------------------------
+
+def mark_sync(conn, platform: str, profile_hash: str, at: str | None = None,
+              path: str | None = None, notes: str | None = None) -> None:
+    """Record that `platform`'s pack now matches profile.md at `profile_hash`."""
+    at = at or date.today().isoformat()
+    conn.execute(
+        "INSERT INTO profile_sync (platform, path, profile_hash, last_synced_at, status, notes) "
+        "VALUES (?,?,?,?,?,?) ON CONFLICT(platform) DO UPDATE SET "
+        "path=excluded.path, profile_hash=excluded.profile_hash, "
+        "last_synced_at=excluded.last_synced_at, status=excluded.status, notes=excluded.notes",
+        (platform, path, profile_hash, at, "synced", notes))
+    conn.commit()
+
+
+def sync_status(conn, current_ver: str) -> list[dict]:
+    """Per-platform state. `drift` = profile.md moved since the last sync."""
+    rows = {r["platform"]: dict(r) for r in conn.execute("SELECT * FROM profile_sync")}
+    out = []
+    for p in PLATFORMS:
+        row = rows.get(p) or {"platform": p, "path": None, "profile_hash": None,
+                              "last_synced_at": None, "status": "never", "notes": None}
+        row["drift"] = row["status"] != "never" and row["profile_hash"] != current_ver
+        out.append(row)
+    return out
 def stage_of(row, has_cv: bool, has_prep: bool) -> list[str]:
     """Agent-side pipeline stage, DERIVED from existing data (no stage column).
 
@@ -311,7 +344,7 @@ def report(conn) -> dict:
 
 # --- B7: export / restore / backup -----------------------------------------
 # FK-safe restore order: parents before children.
-TABLE_ORDER = ("runs", "jobs", "cv_versions", "prep",
+TABLE_ORDER = ("runs", "jobs", "cv_versions", "prep", "profile_sync",
                "job_events", "prep_rounds", "run_items")
 
 

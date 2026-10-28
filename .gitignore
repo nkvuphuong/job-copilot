@@ -34,5 +34,9 @@ __pycache__/
 !/prep/_example.md
 !/prep/.gitkeep
 
+# sync/ = profile packs generated from profile.md (personal data)
+/sync/*
+!/sync/.gitkeep
+
 # Archify diagram visual-check sidecars (regenerable evidence)
 /docs/diagrams/*.visual-check.*

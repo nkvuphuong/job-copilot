@@ -74,6 +74,15 @@ def _job_detail(conn, job_id: str) -> dict | None:
     return d
 
 
+def _profile_ver() -> str:
+    p = REPO_ROOT / "profile.md"
+    return db.profile_ver(p.read_text(encoding="utf-8")) if p.exists() else ""
+
+
+def _sync_status(conn) -> list:
+    return db.sync_status(conn, _profile_ver())
+
+
 class Handler(BaseHTTPRequestHandler):
     db_path = None
 
@@ -117,6 +126,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(db.report(self._conn()))
         if u.path == "/api/jobs":
             return self._send(_jobs(self._conn(), parse_qs(u.query)))
+        if u.path == "/api/sync":
+            return self._send(_sync_status(self._conn()))
         q = parse_qs(u.query)
         want_html = (q.get("format") or [""])[0] == "html"
         parts = [p for p in u.path.split("/") if p]  # api jobs <id> | api cv <id>
@@ -132,7 +143,18 @@ class Handler(BaseHTTPRequestHandler):
             return self._cv_content(parts[2], want_html)
         if len(parts) == 3 and parts[:2] == ["api", "prep"]:
             return self._prep_content(parts[2], want_html)
+        if len(parts) == 3 and parts[:2] == ["api", "sync"]:
+            return self._pack_content(parts[2], want_html)
         self._send({"error": "not found"}, 404)
+
+    def _pack_content(self, platform: str, want_html: bool = False):
+        path = REPO_ROOT / "sync" / f"{platform}.md"
+        if platform not in db.PLATFORMS or not path.exists():
+            return self._send({"error": "no pack"}, 404)
+        md = path.read_text(encoding="utf-8")
+        if want_html:
+            return self._send_html(render.to_html(md, f"Profile pack · {platform}"))
+        return self._send({"platform": platform, "markdown": md})
 
     def _prep_content(self, job_id: str, want_html: bool = False):
         row = self._conn().execute("SELECT path FROM prep WHERE job_id = ?",
@@ -167,6 +189,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         u = urlparse(self.path)
         parts = [p for p in u.path.split("/") if p]  # api jobs <id> <action>
+        if len(parts) == 3 and parts[:2] == ["api", "sync"]:
+            body = self._read_json() if self.headers.get("Content-Length") else {}
+            platform = parts[2]
+            if platform not in db.PLATFORMS:
+                return self._send({"error": f"unknown platform {platform}"}, 404)
+            conn = self._conn()
+            db.mark_sync(conn, platform, _profile_ver(), at=body.get("at"),
+                         path=f"sync/{platform}.md", notes=body.get("notes"))
+            return self._send({"ok": True, "platform": platform})
         if len(parts) == 4 and parts[:2] == ["api", "jobs"]:
             job_id, action = parts[2], parts[3]
             conn = self._conn()

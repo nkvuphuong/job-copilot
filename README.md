@@ -16,6 +16,7 @@ Full detail: **[WORKFLOW.md](WORKFLOW.md)**.
 |---|---|---|
 | `.opencode/skills/job-hunt/` | Orchestration skill (the pipeline) + per-source references | ✅ |
 | `.opencode/skills/vn-it-cv/` | CV generate/review/score skill + templates + scripts | ✅ |
+| `.opencode/skills/profile-sync/` | `profile.md` → LinkedIn / ITviec / TopCV / GitHub packs (+ prefill guardrails) | ✅ |
 | `tools/jobcopilot/` | State store (SQLite) + `jc` CLI + local UI (`docs/spec-db-ui.md`) | ✅ |
 | `profile.example.md` | Template for your source-of-truth profile | ✅ |
 | `jobs/_example.md` | Job-posting schema (frontmatter + raw JD) | ✅ |
@@ -23,7 +24,7 @@ Full detail: **[WORKFLOW.md](WORKFLOW.md)**.
 | `offers/_example.md` | Offer-comparison schema | ✅ |
 | `prep/_example.md` | Interview-prep cue card (JD digest + company brief + tech/non-tech) | ✅ |
 | `WORKFLOW.md` / `ONBOARDING.md` / `PREREQUISITES.md` | Docs | ✅ |
-| `profile.md`, `jobs/*`, `cv/*`, `offers/*`, `prep/*`, `jobcopilot.db` | **Your personal data** | ❌ gitignored |
+| `profile.md`, `jobs/*`, `cv/*`, `offers/*`, `prep/*`, `sync/*`, `jobcopilot.db` | **Your personal data** | ❌ gitignored |
 
 Your data stays local. Cloning the repo gives you the tool; you bring your own profile.
 
@@ -50,6 +51,7 @@ Then, in opencode, just talk:
 - "I applied to Rakus — log it"
 - "prep me for the Acme interview"
 - "mock interview me for the Acme tech round"
+- "update my LinkedIn profile" (pack + prefill; **you** press Save)
 
 The `job-hunt` and `vn-it-cv` skills are project-local, so **you must run opencode from inside the repo**.
 

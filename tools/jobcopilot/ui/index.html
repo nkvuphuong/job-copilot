@@ -35,6 +35,8 @@
   pre { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px; white-space:pre-wrap; word-break:break-word; font-size:12.5px; max-height:320px; overflow:auto; }
   .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:4px 0; }
   .kv { color:var(--mut); min-width:110px; display:inline-block; }
+  h2.sec { font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--acc); margin:24px 0 8px; }
+  #sync .row { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
 </style>
 </head>
 <body>
@@ -58,6 +60,9 @@
     </tr></thead>
     <tbody id="rows"></tbody>
   </table>
+
+  <h2 class="sec">Profile sync</h2>
+  <div id="sync"></div>
 </main>
 
 <div id="drawer">
@@ -109,6 +114,20 @@ async function load() {
       <td>${esc(j.followup_at)}</td>
       <td class="mut">${esc(j.next_action)}</td>
     </tr>`).join("");
+  loadSync();
+}
+
+async function loadSync() {
+  const rows = await api("/api/sync");
+  $("#sync").innerHTML = rows.map(r => `
+    <div class="row">
+      <span class="kv">${esc(r.platform)}</span>
+      <span class="mut">${r.last_synced_at ? "sync " + esc(r.last_synced_at) : "chưa sync"}</span>
+      ${r.drift ? `<span class="tag dup">cần re-sync</span>` : (r.status === "never" ? "" : `<span class="tag">khớp</span>`)}
+      <button data-open="sync" data-id="${esc(r.platform)}">Mở pack</button>
+      <button data-syncmark="${esc(r.platform)}">Đã sync</button>
+    </div>`).join("")
+    + `<div class="mut" style="margin-top:6px">Đổi <code>profile.md</code> → nền tảng bị đánh dấu “cần re-sync”. Agent không bao giờ tự bấm Save trên nền tảng.</div>`;
 }
 
 async function openDetail(id) {
@@ -174,13 +193,18 @@ document.addEventListener("change", async e => {
 document.addEventListener("click", async e => {
   const openBtn = e.target.closest("[data-open]");
   if (openBtn) { e.stopPropagation(); return openHtml(openBtn.dataset.open, openBtn.dataset.id); }
-  const roundBtn = e.target.closest("[data-prepround]");
-  if (roundBtn) {
+  const roundBtn = e.target.closest("[data-prepround]");  if (roundBtn) {
     e.stopPropagation();
     const id = roundBtn.dataset.prepround;
     await api(`/api/jobs/${encodeURIComponent(id)}/prep-round`,
       { type: $("#pr-type").value || "mock", to_fix: $("#pr-fix").value });
     return openDetail(id);
+  }
+  const syncBtn = e.target.closest("[data-syncmark]");
+  if (syncBtn) {
+    e.stopPropagation();
+    await api(`/api/sync/${encodeURIComponent(syncBtn.dataset.syncmark)}`, {});
+    return loadSync();
   }
   if (e.target.id === "drawer" || e.target.id === "drawer-close") { $("#drawer").classList.remove("open"); return; }
   if (e.target.closest("#drawer")) return;  // clicks inside the drawer don't reopen
