@@ -21,9 +21,23 @@ Ghi chú:
 - Headline chỉ ~60–70 ký tự hiện trong search → **keyword chính phải nằm trong 60 ký tự đầu**.
 - About: ~300 ký tự đầu là "hook"; phần sau chỉ hiện khi bấm "see more".
 - LinkedIn **không** cho link bấm được trong About/bio → email ghi dạng text.
-- **Ngân sách:** 1 điều hướng / field, ≤ 4 / phiên. Dấu hiệu phải dừng: checkpoint
-  ("verify it's you"), captcha, hoặc yêu cầu đăng nhập lại giữa phiên — đây là chặn **tài khoản**,
-  nặng hơn block IP; dừng ngay và báo người dùng.
+- **Không có undo / version history:** ghi đè About là mất bản cũ → backup ra
+  `sync/linkedin.before.md` trước khi mở modal.
+- **Không có preview:** Save là live ngay, không xem trước được.
+- **Counter từng field khác nhau** (verify 2026-10-28): **About: không có counter** → gõ quá 2.600 không
+  biết, phải tự đếm. **Highlights/description của role: CÓ counter** (`0/2,000` ngay dưới ô).
+- **About vs Highlights**: hai field khác trục — About = *capability*, Highlights = *event + cơ chế*.
+  Không bỏ trống field nào, không copy câu. Luật: `writing-style.md` §"About vs Highlights".
+  Sau mỗi Save phải đọc lại DOM.
+- **Không dùng API trực tiếp (Voyager):** cần `JSESSIONID` + `csrf-token`, request shape khác traffic SPA,
+  rate limit theo account, có thể trả `200` mà không lưu. Rủi ro **cao hơn** lái browser.
+- **Phân tầng:** *tầng 1* Headline / About / Location / Contact → agent điền được; *tầng 2* Skills /
+  Education → người dùng; *tầng 3* Experience (typeahead + date picker + checkbox "currently") →
+  người dùng copy từ pack. Chi tiết + pre-flight: `prefill.md` §"LinkedIn — ưu tiên an toàn tài khoản".
+- **Ngân sách:** **≤2 section / phiên**, **1 field mỗi lần Save**, **không 2 phiên trong cùng 1 giờ**,
+  ≤4 `navigate_page`. Trước phiên đầu: người dùng tắt *"Share profile updates with your network"*
+  (mỗi Save bắn notification cho network). Dấu hiệu phải dừng: checkpoint ("verify it's you"), captcha,
+  hoặc yêu cầu đăng nhập lại giữa phiên — đây là chặn **tài khoản**, nặng hơn block IP; dừng ngay.
 
 ## GitHub
 

@@ -53,9 +53,6 @@ cho phù hợp từng nền tảng, không bao giờ thêm kinh nghiệm, số l
    sinh pack theo giả định. Pack sai hình dạng = mất cả lượt prefill.
 10. **Đóng modal = huỷ dữ liệu.** Đã điền thì để nguyên cho người dùng Save; không Close/×/Cancel
     rồi định quay lại. Một modal một lượt.
-15. **Tab = dữ liệu chưa lưu.** Khi còn form/modal chưa Save: **không** `new_page`, **không** `close_page`,
-    không navigate. Trước khi đóng bất kỳ tab nào: `list_pages` và so **URL + title** với id định đóng
-    (đã đóng nhầm tab hồ sơ vì id đổi sau `new_page` → mất form vừa điền).
 11. **Mỗi nền tảng một lượt duy nhất**, không nhảy trang qua lại (TopCV đã chặn Cloudflare vì việc này).
 12. Danh sách lỗi đã mắc + quy trình đúng: `references/prefill.md` mục "Sai sót đã mắc — không lặp lại".
     **Giới hạn thử:** 2 kỹ thuật / nhóm control là đủ để đổi cách làm; riêng `<select>` bị Tom Select bọc
@@ -68,6 +65,22 @@ cho phù hợp từng nền tảng, không bao giờ thêm kinh nghiệm, số l
     Experience. Highlight Project chỉ mô tả **bối cảnh · quy mô · vai trò · kiến trúc · integrations ·
     team size** + tối đa 1 metric mạnh nhất. Copy bullet Experience sang Project là lỗi đã mắc (trùng
     ~90%): `references/platforms.md` §ITviec, mục "Project ≠ Work Experience".
+15. **Tab = dữ liệu chưa lưu.** Khi còn form/modal chưa Save: **không** `new_page`, **không** `close_page`,
+    không navigate. Trước khi đóng bất kỳ tab nào: `list_pages` và so **URL + title** với id định đóng
+    (đã đóng nhầm tab hồ sơ vì id đổi sau `new_page` → mất form vừa điền).
+16. **LinkedIn — an toàn tài khoản trên hết.** Chặn ở LinkedIn là chặn **tài khoản** (checkpoint, buộc
+    upload giấy tờ), không phải block IP. Không có "chắc chắn an toàn", chỉ giảm xác suất →
+    đọc `references/prefill.md` §"LinkedIn — ưu tiên an toàn tài khoản" **trước** khi mở browser.
+17. **LinkedIn: cấm JS ghi giá trị.** Không `evaluate_script` để set `value` rồi `dispatchEvent` (sự kiện
+    `isTrusted=false` — đo được từ phía trang). Chỉ `fill` / `click` qua a11y uid. Widget nào **bắt buộc**
+    JS mới điền được (như Tom Select) → **bàn giao người dùng**, không lách.
+18. **LinkedIn: ngân sách tính bằng số lần Save,** không chỉ `navigate_page`: **≤2 section / phiên**,
+    **≤1 field mỗi lần Save**, và **không 2 phiên trong cùng 1 giờ**. Vượt → dừng, hẹn phiên sau.
+19. **LinkedIn: backup trước khi sửa.** LinkedIn **không có undo / version history** — ghi đè là mất.
+    Bắt buộc: đọc Headline/About/Experience hiện tại → lưu `sync/linkedin.before.md` (gitignored) →
+    rồi mới mở modal. Người dùng tắt **"Share profile updates with your network"** trước phiên đầu
+    (mỗi Save bắn notification cho network).
+
 
 ## Workflow GENERATE
 

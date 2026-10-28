@@ -62,7 +62,9 @@ def main(argv: list[str]) -> int:
         return 1
     profile_ids = set(re.findall(r"e\d{3}", profile.read_text(encoding="utf-8")))
 
-    packs = [Path(a) for a in argv] or sorted((REPO / "sync").glob("*.md"))
+    packs = [Path(a) for a in argv] or [
+        p for p in sorted((REPO / "sync").glob("*.md")) if not p.name.endswith(".before.md")
+    ]  # *.before.md = bản chụp hồ sơ cũ để khôi phục, không phải pack
     if not packs:
         print("error: no packs found in sync/", file=sys.stderr)
         return 1

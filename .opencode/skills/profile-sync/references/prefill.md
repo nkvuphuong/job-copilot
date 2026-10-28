@@ -85,7 +85,7 @@ nền tảng, kể cả nền tảng chưa từng chặn.
    |---|---|---|
    | TopCV | **1–2** | bị Cloudflare chặn sau ~6 lượt liên tiếp |
    | ITviec | ≤ 6 | ~10 lượt/phiên chưa bị gì |
-   | LinkedIn | 1 / field, ≤ 4 | checkpoint LinkedIn = chặn **tài khoản**, nặng hơn block IP |
+   | LinkedIn | **≤2 section / phiên**, 1 field / lần Save, ≤4 navigate | checkpoint LinkedIn = chặn **tài khoản**, nặng hơn block IP. Chi tiết: §"LinkedIn — ưu tiên an toàn tài khoản" |
    | GitHub | **0** | dùng `git` / API, không lái browser |
 
    Vượt ngân sách → dừng, báo người dùng, phần còn lại để họ làm.
@@ -108,6 +108,55 @@ khác**, **không retry**.
 10. Recovery đưa cho người dùng (agent không tự làm): chờ 15–30 phút → xoá cookie domain (mất đăng nhập)
     → đổi IP (4G/Wi-Fi khác) → support nền tảng. **Không** VPN rồi login lại ngay.
 
+## LinkedIn — ưu tiên an toàn tài khoản
+
+LinkedIn là nền tảng **duy nhất** trong 4 nền tảng chặn ở tầng **tài khoản** (checkpoint "verify it's you"
+→ buộc upload giấy tờ). Đang trong mùa tìm việc thì mất account vài ngày thiệt hại hơn nhiều so với
+"đỡ phải copy-paste 10 phút". Vì vậy: **thà để người dùng làm tay** còn hơn lái browser cho đẹp.
+
+### Rủi ro đến từ đâu (3 nguồn, chỉ 1 liên quan tới công cụ)
+
+| Nguồn | Nội dung | Mức |
+|---|---|---|
+| **Fingerprint kỹ thuật** | headless? `navigator.webdriver`? TLS/JA3? cookie? — browser thật đang đăng nhập thì **sạch** (`webdriver=false`, UA thật, plugin thật) | Thấp |
+| **Hành vi** ← *nguồn chính* | 0 mouse move / 0 scroll, text xuất hiện tức thì, click chính xác tâm element, mở 7 modal liên tiếp, timeline đều tăm tắp, thiếu request phụ của SPA | **Cao** |
+| **Chính sách + enforcement** | ToS cấm automated access; họ khoá theo heuristic + report, ngưỡng không công bố | Luôn tồn tại |
+
+Hệ quả: **không tồn tại cách "chắc chắn an toàn"**, chỉ giảm xác suất. Và "dùng API cho sạch" là
+**ngược**: Voyager API cần `JSESSIONID` + `csrf-token`, request shape khác hoàn toàn traffic SPA, rate
+limit chặt theo account, và có thể trả `200` mà **không lưu** (hỏng âm thầm). Không dùng API trực tiếp
+cho LinkedIn.
+
+### Phân tầng field — chỉ làm tầng 1 khi chưa có lý do rõ ràng
+
+| Tầng | Field | Vì sao | Ai làm |
+|---|---|---|---|
+| **1 · an toàn** | Headline (220), About (2600), Location, Contact/Website | 1 modal, 1 request, không typeahead, không date picker | agent điền được |
+| **2 · trung bình** | Skills (mỗi skill = 1 request, max 50), Education | nhiều request nhỏ liên tiếp = mẫu bất thường rõ nhất; đổi thứ tự = xoá + thêm lại | người dùng, hoặc ≤5 skill/phiên |
+| **3 · rủi ro cao** | Experience (typeahead company + title + date picker + checkbox "currently working here") | nhiều bước trong 1 modal; chọn sai gợi ý → **tạo company entity trùng**; tạo mới nhiều entry liên tiếp = mẫu xấu nhất | **người dùng copy từ pack** |
+
+### Pre-flight (làm trước khi mở browser — không có bước này thì không sửa gì)
+
+1. **Backup**: đọc Headline/About/Experience hiện tại → `sync/linkedin.before.md`. LinkedIn **không có
+   undo, không có version history** — ghi đè About là mất bản cũ vĩnh viễn.
+2. Người dùng tắt **Settings → Visibility → "Share profile updates with your network"**: mỗi Save bắn
+   notification cho toàn network.
+3. Chốt các quyết định nội dung **trước** phiên (vd có giữ nhiều entry cùng một công ty không, entry gần
+   nhất đã kết thúc thì **bỏ tick** "currently working here") — sửa lại lần hai là thêm 1 phiên rủi ro.
+4. Đo fingerprint 1 tool call: `navigator.webdriver`, UA. Nếu `webdriver=true` → **dừng**, không phải
+   browser của người dùng.
+
+### Trong phiên
+
+- **≤2 section / phiên**, **≤1 field mỗi lần Save**, **không 2 phiên trong cùng 1 giờ**.
+- Chỉ `fill` / `click` qua a11y uid. **Cấm** `evaluate_script` set `value` + `dispatchEvent`
+  (`isTrusted=false` — đo được từ phía trang). Widget bắt buộc JS → bàn giao.
+- Mỗi field: mở modal → `fill` → `take_screenshot` → **dừng**, người dùng Save → verify bằng DOM →
+  mới sang field tiếp.
+- Save là live ngay, **không có preview**. Counter không đồng nhất: About **không có** counter,
+  Highlights/description của role **có** (`0/2,000`) → field nào không có counter thì tự đếm trước khi `fill`.
+  Sau mỗi Save: đọc lại DOM đối chiếu độ dài + nội dung cuối.
+
 ## Thứ tự nền tảng & điểm cần biết
 
 | Thứ tự | Nền tảng | Ghi chú riêng |
@@ -115,7 +164,7 @@ khác**, **không retry**.
 | 1 | **ITviec** | Text thuần điền được (Title, About Me 2500). `<select>` Tom Select **điền được** (§Date picker). Cover Letter **500** ký tự. Skills max 20/group. Upload CV **tự submit**. Modal mở bằng icon bút chì. Close = huỷ |
 | 2 | **TopCV** | Không có profile text. Chỉ upload CV: `/upload-cv` → chọn file → **người dùng bấm `Tải CV lên`**. Một lượt duy nhất, không nhảy trang |
 | 3 | **GitHub** | Settings → Public profile cho bio; README là file trong repo `<user>/<user>` → **hỏi trước khi commit**; pinned là thao tác UI |
-| 4 | **LinkedIn** | Chống automation mạnh nhất. Mỗi field một modal, một số chỗ auto-save khi blur → **một field một lần**: điền → screenshot → người dùng Save → mới sang field tiếp |
+| 4 | **LinkedIn** | Chống automation mạnh nhất, chặn ở tầng **tài khoản**. Chỉ làm field tầng 1 (Headline/About/Location/Contact); Experience + Skills để người dùng. ≤2 section/phiên. Backup trước. §"LinkedIn — ưu tiên an toàn tài khoản" |
 
 ## Field dạng autocomplete / entity matching
 

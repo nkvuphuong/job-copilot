@@ -23,8 +23,43 @@ Người đọc: recruiter lướt 3 giây, rồi headhunter search bằng keywo
   3. 1 đoạn ngắn về công việc gần nhất.
   4. Stack + địa điểm/timezone + CTA liên hệ.
   - Xuống dòng bằng dòng trống (LinkedIn giữ line break). Ký tự bullet `•` an toàn.
-- **Experience description**: 4–6 bullet, kèm 1 dòng context (domain + stack) ở đầu. Không copy nguyên
-  About vào đây.
+- **Highlights** (tên field description của role trên LinkedIn, 2.000 ký tự): 4–6 bullet, kèm 1 dòng
+  context (domain + stack) ở đầu. Không copy nguyên About vào đây — xem luật chia trục bên dưới.
+
+### About vs Highlights — chia theo TRỤC, không phải bỏ trống field nào
+
+Hai field trả lời hai câu hỏi khác nhau, đọc ở hai thời điểm khác nhau. **Bỏ trống Highlights không phải
+là "tránh trùng" — đó là mất chỗ duy nhất recruiter đọc thành tích trong ngữ cảnh role.**
+
+| | About | Highlights (per role) |
+|---|---|---|
+| Câu hỏi | "Anh là ai, thuê anh để làm gì?" | "Ở chỗ đó anh đã làm gì, quy mô nào?" |
+| Ai đọc | recruiter lướt search / card Open-to-work, đọc ~300 ký tự đầu | người đã quan tâm, bấm `…see more` trên đúng role |
+| Đơn vị | **loại vấn đề** (capability) | **việc đã làm** (event) |
+| Số liệu | số **rút gọn** | số đầy đủ **+ cơ chế** |
+| Thời gian | không có | bắt buộc (role dates) |
+| Scope (team, quy mô) | không | bắt buộc |
+
+**5 luật:**
+
+1. Mỗi `[eNNN]` xuất hiện **đầy đủ (cơ chế + số) đúng một lần** — ở Highlights.
+2. Ở About, cùng con số chỉ được xuất hiện **dạng rút gọn, khác câu** — không kèm cơ chế.
+3. **Từ khoá/skill lặp tự do** — đó là tín hiệu search, không phải trùng nội dung.
+4. Không câu nào (kể cả đảo từ) giống nhau giữa hai field.
+5. Hết chỗ: About giữ **con số**, Highlights giữ **cách làm**.
+
+Ví dụ cùng `e034`:
+
+```text
+About      : "Make slow platforms fast: 30s+ down to under 1s on a 3M-orders/year platform."
+Highlights : "Scaled the store platform: 500GB+ MySQL, near-1B-row largest table, N+1 queries and
+              sorts spilling to disk. Reworked schema and query paths: >30s → <1s, 50% less CPU,
+              90% fewer OOM errors."
+```
+
+Nhiều sub-role trong **một** entry (giữ 1 entry để không tạo entry rác): đặt mini-header ngay trong
+description — `Senior Developer (09/2020 – 06/2023)` / `Team Lead — Data (…)` / `Technical Lead (…)` —
+rồi bullet dưới mỗi header.
 - **Skills**: 20–35 skill, xếp theo mức ưu tiên của `profile.md` §2 Targeting (thứ tự hiển thị = thứ tự bạn chọn).
 
 ## ITviec
