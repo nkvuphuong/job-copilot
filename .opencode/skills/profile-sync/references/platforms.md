@@ -13,7 +13,7 @@ Verify 2026-10-28 (LinkedIn Help + nhiều nguồn đo editor độc lập, số
 | Headline | 220 | ~60–70 trong search, comment, invite |
 | About | 2600 | ~300 trên profile |
 | Experience title | 100 | — |
-| Experience description | 2000 / role | — |
+| **Highlights** (tên thật của field description trong role) | 2000 / role | counter `0/2,000` hiện dưới ô |
 | Skill (mỗi skill) | 80 | — |
 | Số skill tối đa | 50 | — |
 
@@ -24,6 +24,8 @@ Ghi chú:
 - **Không có undo / version history:** ghi đè About là mất bản cũ → backup ra
   `sync/linkedin.before.md` trước khi mở modal.
 - **Không có preview:** Save là live ngay, không xem trước được.
+- **Headline bị LinkedIn ghi đè khi thêm role mới** → sau mỗi lần thêm role phải đọc lại top card.
+  Chi tiết + checklist: `prefill.md` §"LinkedIn — kỹ thuật đã kiểm chứng trên form thật".
 - **Counter từng field khác nhau** (verify 2026-10-28): **About: không có counter** → gõ quá 2.600 không
   biết, phải tự đếm. **Highlights/description của role: CÓ counter** (`0/2,000` ngay dưới ô).
 - **About vs Highlights**: hai field khác trục — About = *capability*, Highlights = *event + cơ chế*.

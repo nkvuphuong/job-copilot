@@ -140,6 +140,14 @@ hoặc **lộ trình nội bộ tự thiết kế**.
 7. Chép bullet Work Experience vào Highlight Project (trùng ~90%). Project = bối cảnh/quy mô/kiến trúc/
    vai trò/team; số liệu **kết quả** để Experience kể.
 8. Đọc counter `1441/500` thành 5000 → Cover Letter bị chặn. Lấy đúng cặp `x/y` từ DOM trước khi viết.
+9. **LinkedIn ghi đè Headline** khi thêm role mới (`Junior Developer at <company>`) — phải đọc lại top card
+   sau mỗi Save; form `Add role` còn mặc định `I currently work here` = ON và dài hơn phần nhìn thấy.
+10. **Typeahead `Location` tự pick địa danh con** (`Củ Chi, HCMC`) và `fill` không kích hoạt typeahead →
+    phải `type_text` rồi chọn đúng dòng city-level trong `[role=listbox]`.
+11. **Chữ gõ rơi vào field khác** khi focus nhảy (location → Highlights) → trước khi Save phải đọc lại
+    **toàn bộ** field, không chỉ field vừa gõ.
+12. **About vs Highlights không phải hai bản của một nội dung**: bỏ trống Highlights là mất chỗ duy nhất
+    recruiter đọc thành tích trong ngữ cảnh role → chia theo trục (capability vs event + cơ chế).
 
 **Non-goal:** không auto-publish. **Phụ thuộc:** `profile.md` + `vn-it-cv`.
 

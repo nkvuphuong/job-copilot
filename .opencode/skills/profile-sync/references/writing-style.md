@@ -15,8 +15,13 @@ Cùng một `profile.md`, bốn cách đọc khác nhau. Sai style là mất tí
 
 Người đọc: recruiter lướt 3 giây, rồi headhunter search bằng keyword.
 
-- **Headline**: 60 ký tự đầu phải đứng một mình được — `Senior Backend Engineer · 13+ years`. Sau đó
-  mới là stack + một tín hiệu quy mô. Không nhồi 10 công nghệ; 4–6 là đủ.
+- **Headline**: 60 ký tự đầu phải đứng một mình được, vì đó là tất cả những gì hiện trong search,
+  comment và invite. Cấu trúc: **câu định vị → stack → 2–3 loại việc**. Không nhồi 10 công nghệ; 3–5 là đủ.
+- **Không đưa số liệu vào Headline** (chốt 2026-10-29): số liệu đã có ở About + Highlights; Headline mà
+  kèm `3M+ orders/year`, `13+ years` thì đọc như bản nén của CV và **mất chỗ cho câu định vị**. Số liệu
+  trong headline chỉ dùng khi con số *chính là* định vị (vd `$10M ARR` với người làm growth).
+- **Ngôi thứ nhất** (`I build high-volume backends …`) đọc khác hẳn 200 headline `Senior X at Y` và khớp
+  giọng câu mở About — nhưng chỉ dùng khi câu đó **đứng một mình được**, không phải khẩu hiệu rỗng.
 - **About**:
   1. Câu 1 (trong ~300 ký tự đầu) = hook có số liệu, không phải "I am a passionate developer".
   2. 3–5 bullet "what I am hired to do", mỗi bullet một loại việc (hiệu năng / migration / dữ liệu / delivery).

@@ -157,6 +157,45 @@ cho LinkedIn.
   Highlights/description của role **có** (`0/2,000`) → field nào không có counter thì tự đếm trước khi `fill`.
   Sau mỗi Save: đọc lại DOM đối chiếu độ dài + nội dung cuối.
 
+## LinkedIn — kỹ thuật đã kiểm chứng trên form thật (2026-10-28/29)
+
+| Control | Kỹ thuật ĐÚNG | Ghi chú |
+|---|---|---|
+| Textbox (`Job title`, `First name`, headline) | `fill` a11y uid | OK, kể cả contenteditable (giữ `\n`) |
+| Contenteditable (`Headline`, `About`, `Highlights`) | `fill` uid | Đọc lại bằng `innerText`, không phải `value` |
+| **Native `<select>`** (Start/End Month, Year, Employment type, Location type) | `click` combobox uid → `click` option uid | **Điền được** — khác Tom Select của ITviec. Không dùng `select_option` mờ |
+| **Typeahead** (`Organization`, `Location`) | `click` field → `type_text` (gõ thật) → đọc `[role=listbox]` → `click` `button` bên trong | `fill` **không** kích hoạt typeahead. Gợi ý render là `button`, không phải `option` |
+| Checkbox (`I currently work here`) | `click` **label text** nếu `click` checkbox báo "did not become interactive" | Đã gặp: uid checkbox chết, label vẫn ăn |
+| Toggle (`Notify network`) | để **Off** (mặc định form mới = On) | Kiểm `aria-checked`/`checked`, đừng tin chữ "Off" trên UI |
+| `Where did you find this job` | để `Please select` | Không có trong `profile.md` |
+| Nút Save | **không bao giờ bấm** | Guardrail 1 |
+
+**Uid chết sau mỗi thay đổi trạng thái:** chọn company, bỏ tick checkbox, đổi 1 `<select>` → toàn bộ uid
+của modal bị cấp lại (đã thấy `14_*` → `19_*` → `23_*` → `28_*`). **Snapshot lại sau mỗi bước**, không
+dùng uid cũ cho bước sau.
+
+### Checklist trước khi bàn giao Save (LinkedIn — bắt buộc, 7 dòng)
+
+1. Đọc lại **toàn bộ** field của form (không chỉ field vừa gõ) — chống lỗi "chữ rơi vào field khác".
+2. Với role có `end` date: `I currently work here` = **unchecked** và card phải hiện `… – <end>`.
+3. `Notify network` = **Off**.
+4. Typeahead: giá trị phải đúng **cấp hành chính** (không phải huyện/quận), entity company phải có logo
+   hoặc đúng tên đã chốt.
+5. Counter (nếu field có): số ký tự ≤ limit.
+6. **Nếu là form `Add role`: scroll hết form** — dưới `Highlights` còn block khác.
+7. **Sau khi người dùng Save: đọc lại top card** — headline có thể bị LinkedIn ghi đè.
+
+### Lỗi đã mắc riêng cho LinkedIn — chỉ mục
+
+| Lỗi | Mục |
+|---|---|
+| Thêm role → LinkedIn ghi đè headline thành `{title} at {company}` | §"Thêm role mới → LinkedIn tự đổi HEADLINE" |
+| Location tự pick địa danh con (`Củ Chi`) | §"Location autocomplete … tự chọn địa danh SAI" |
+| Chữ gõ rơi vào `Highlights` khi focus sai | §"Gõ chữ khi focus sai → rơi vào field KHÁC" |
+| About/Highlights trùng nội dung | `writing-style.md` §"About vs Highlights" |
+| Đóng tab / `new_page` khi form chưa Save | `SKILL.md` guardrail 15 |
+| Sửa nhiều section liên tiếp | `SKILL.md` guardrail 18 |
+
 ## Thứ tự nền tảng & điểm cần biết
 
 | Thứ tự | Nền tảng | Ghi chú riêng |
@@ -165,6 +204,51 @@ cho LinkedIn.
 | 2 | **TopCV** | Không có profile text. Chỉ upload CV: `/upload-cv` → chọn file → **người dùng bấm `Tải CV lên`**. Một lượt duy nhất, không nhảy trang |
 | 3 | **GitHub** | Settings → Public profile cho bio; README là file trong repo `<user>/<user>` → **hỏi trước khi commit**; pinned là thao tác UI |
 | 4 | **LinkedIn** | Chống automation mạnh nhất, chặn ở tầng **tài khoản**. Chỉ làm field tầng 1 (Headline/About/Location/Contact); Experience + Skills để người dùng. ≤2 section/phiên. Backup trước. §"LinkedIn — ưu tiên an toàn tài khoản" |
+
+## Thêm role mới → LinkedIn tự đổi HEADLINE (không hỏi)
+
+Đã mắc 2026-10-29: thêm entry `Junior Developer · Nhất Nguyên Phương (2012–2013)` → LinkedIn **ghi đè
+headline** thành `Junior Developer at Nhất Nguyên Phương` (pattern `{title} at {company}` của role mới).
+Headline 106 ký tự vừa duyệt mất, phải mở `Edit intro` điền lại.
+
+Luật:
+- Sau **mỗi** lần thêm role mới: đọc lại headline ở top card **trước khi** báo xong. Không giả định
+  LinkedIn giữ headline.
+- Trước khi bấm Save ở form `Add role`: **scroll hết form** (dưới `Highlights` còn `Skills` và có thể còn
+  toggle) — form dài hơn phần nhìn thấy; bỏ sót toggle = mất dữ liệu ở field khác.
+- Form `Add role` mặc định **`I currently work here` = ON** → luôn bỏ tick với role đã kết thúc, và kiểm
+  lại card sau Save (phải hiện `… – <end date>`, không phải `Present`).
+
+## Location autocomplete trên LinkedIn — tự chọn địa danh SAI
+
+Gõ `Ho Chi Minh City, Vietnam` rồi rời ô → LinkedIn tự pick gợi ý đầu tiên và biến thành
+**`Củ Chi, Ho Chi Minh City, Vietnam`** (một huyện). Không có cảnh báo.
+
+Luật:
+- Sau khi gõ, **luôn mở listbox và click đúng dòng city-level** (`Ho Chi Minh City, Vietnam`), không để
+  LinkedIn tự chọn.
+- Listbox có nhiều dòng gần giống nhau: `Ho Chi Minh City, Vietnam` · `Ho Chi Minh City, Ho Chi Minh City,
+  Vietnam` · `Huyện Củ Chi, …` · `Quận 4, …` · `Thủ Đức, …`. Chọn theo **cấp hành chính**, không theo
+  dòng đầu.
+- `fill("")` **không xoá** được ô này, và `Meta+A` + Backspace cũng không → `fill` với **giá trị đầy đủ**
+  thay thế nội dung. Đừng cố xoá bằng keyboard.
+
+## Gõ chữ khi focus sai → rơi vào field KHÁC
+
+Đã mắc: sau khi `fill` ô Location, focus nhảy sang `Description`; chuỗi "Ho Chi Minh City" bị chèn vào
+**đầu Highlights** (`Ho Chi Minh CityImport/export company · …`).
+
+Luật: sau mỗi lần `type_text`/`fill`, **đọc lại toàn bộ field của form** (không chỉ field vừa gõ) trước khi
+tin. Một `fill` lại description (thay thế toàn bộ) là đủ để sửa.
+
+## Trang LinkedIn render rỗng / chỉ có shell
+
+Đã gặp: `main` chỉ có ~4.3k ký tự (nav + analytics), không có `Experience`; hoặc nội dung nằm trong iframe
+`/preload/?_bprMode=vanilla`. Đây là shell chưa hydrate, **không phải** block.
+
+Luật: **1 lần reload** (tính vào ngân sách navigate). Vẫn rỗng → **dừng**, không reload lần 2, không đoán
+URL. Nếu cần verify một entry cụ thể mà trang không render, mở thẳng form `edit/forms/position/<id>/`
+(URL lấy từ snapshot cũ, không phải dò).
 
 ## Field dạng autocomplete / entity matching
 

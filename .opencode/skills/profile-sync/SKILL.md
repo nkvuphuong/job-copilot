@@ -76,6 +76,10 @@ cho phù hợp từng nền tảng, không bao giờ thêm kinh nghiệm, số l
     JS mới điền được (như Tom Select) → **bàn giao người dùng**, không lách.
 18. **LinkedIn: ngân sách tính bằng số lần Save,** không chỉ `navigate_page`: **≤2 section / phiên**,
     **≤1 field mỗi lần Save**, và **không 2 phiên trong cùng 1 giờ**. Vượt → dừng, hẹn phiên sau.
+20. **LinkedIn: sau khi Save phải verify, không tin form.** Đọc lại top card + entry vừa sửa: **headline**
+    (LinkedIn ghi đè thành `{title} at {company}` khi thêm role), trạng thái `current role`, và giá trị
+    typeahead (`Location` từng tự đổi thành một huyện). Checklist 7 dòng: `prefill.md` §"LinkedIn — kỹ thuật
+    đã kiểm chứng trên form thật".
 19. **LinkedIn: backup trước khi sửa.** LinkedIn **không có undo / version history** — ghi đè là mất.
     Bắt buộc: đọc Headline/About/Experience hiện tại → lưu `sync/linkedin.before.md` (gitignored) →
     rồi mới mở modal. Người dùng tắt **"Share profile updates with your network"** trước phiên đầu
