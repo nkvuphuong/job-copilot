@@ -127,7 +127,7 @@ def _evidence_scope(profile_text: str) -> str:
 
 def _profile_vocab(profile_text: str):
     """Lowercased evidence-scoped text + word stems, so 'optimization'/'queries'/
-    '3M'/'orders' match 'Optimized SQL queries' / '3M+ orders'."""
+    '3M'/'orders' match 'Optimized SQL queries' / '3M+ orders'.  leak-ok
     low = _evidence_scope(profile_text).lower()
     stems = set()
     for w in re.findall(r"[a-z0-9+#.]+", low):

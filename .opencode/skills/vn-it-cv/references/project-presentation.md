@@ -10,8 +10,8 @@
 - **<Nhãn dự án>:** <Động từ> + <việc + quy mô> + <tech nếu chưa ở dòng Tech> — <kết quả có số> <!-- e0xx -->
 ```
 
-- **Nhãn dự án** in đậm ở ĐẦU bullet: tên sản phẩm (`UrBox`, `EzyBook`, `RealtorVietnam`,
-  `MyHair`, `iDECAF`, `AZpay`, `Gearment CRM`) hoặc nhãn chức năng ngắn nếu dự án không có
+- **Nhãn dự án** in đậm ở ĐẦU bullet: tên sản phẩm (`Acme Shop`, `Acme ERP`, `Acme Listings`,
+  `AcmeSalon`, `AcmeTheatre`, `AcmePay`, `Acme CRM`) hoặc nhãn chức năng ngắn nếu dự án không có
   tên riêng (`AWS migration`, `Customer data migration`, `Performance`, `Reliability`,
   `Reporting`, `Team leadership`).
 - Tối đa **2 dòng**; mỗi bullet có **≥1 trong 3**: số liệu · quy mô · một quyết định kỹ thuật cụ thể.
@@ -19,7 +19,7 @@
   `Contributed to` giữ nguyên nếu đó là sự thật (đừng đổi thành "Built" khi chưa chắc).
 
 **Ví dụ (chỉ dùng thông tin có trong profile):**
-- Trước: `Led DigitalOcean → AWS migration (web: zero downtime; DB: planned 12h window) for the 3M-orders/year platform.`
+- Trước: `Led DigitalOcean → AWS migration (web: zero downtime; DB: planned 12h window) for a high-volume platform.`
 - Sau: `**AWS migration:** Led the move from DigitalOcean to AWS — zero-downtime web, one planned 12-hour DB window.`
 - Trước: `Introduced PostgreSQL for the Customer Portal V3 data layer — schema design, queries, and migration from the legacy MySQL stack.`
 - Sau: `**Customer Portal V3:** Introduced PostgreSQL for the data layer — schema, queries, and migration from the legacy MySQL stack.`
@@ -29,8 +29,8 @@
 Dùng `#### ` cho từng vai trò — mỗi vai trò có bullet riêng + `**Tech:**` riêng:
 
 ```
-### Gearment Inc — Technical Lead · 09/2020 – 04/2026
-Print-on-Demand B2B SaaS for the US market · 350+ employees · 3M+ orders/year.
+### Acme Inc — Technical Lead · MM/YYYY – MM/YYYY
+B2B SaaS for the US market · N+ employees · N orders/year.
 
 #### Technical Lead · 01/2025 – 04/2026
 - **AWS migration:** ... <!-- e001 -->
@@ -53,7 +53,7 @@ Print-on-Demand B2B SaaS for the US market · 350+ employees · 3M+ orders/year.
 1. **Chức danh không gộp bằng `/`** — "Technical Lead / Senior Developer" bị đọc thành một chức danh sai
    và mất lộ trình. Tách bằng `#### ` (mục 2).
 2. **Không dùng ký tự mũi tên `→`** — thay bằng chữ: "from DigitalOcean to AWS".
-3. **Không lặp thông tin quy mô** (vd "3M+ orders/year") — giữ **một lần** ở dòng context công ty.
+3. **Không lặp thông tin quy mô** (vd "N orders/year") — giữ **một lần** ở dòng context công ty.
 4. **`Tech:` riêng cho mỗi vai trò** — không dùng chung nhiều vai trò; đặt ở dòng riêng (không dính bullet).
    Tech chính của dự án có thể xuất hiện trong bullet; dòng `Tech:` là hợp nhất của vai trò đó.
    **Chỉ chứa tầng A (stack: language/framework/DB/infra/platform).** KHÔNG đưa practices

@@ -68,7 +68,8 @@ Steps that WOULD run with --run:
                   exposes profile_ver + stale_cvs
   P5e sync:       sync status lists 4 platforms; mark then no drift; profile.md
                   change -> drift; pack_check accepts ok, rejects over-limit /
-                  unknown evidence
+                  unknown evidence; leak_check finds no real identifiers in
+                  tracked files
   P6  vn-it-cv:   selfcheck_cv.py all -> exit 0; 2 temp negative CVs -> exit 1;
                   render_cv.py -> html with <header>, no <!-- comments
   P7  cleanup:    kill server; remove temp (unless --keep); assert real tree unchanged
@@ -318,6 +319,8 @@ PY
   python3 "$PACK_CHECK_REL" sync/_e2e_ev.md >/dev/null 2>&1
   assert_eq "pack_check rejects unknown evidence -> 1" "$?" "1"
   rm -f sync/_e2e_ok.md sync/_e2e_over.md sync/_e2e_ev.md
+  python3 scripts/leak_check.py >/dev/null 2>&1
+  assert_true "no real identifiers/metrics in tracked files (leak_check)" $?
 
   step "P6 vn-it-cv"
   if [ -f profile.md ]; then

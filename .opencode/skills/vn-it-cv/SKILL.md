@@ -41,6 +41,9 @@ Viết, sửa, review và chấm điểm CV cho thị trường IT Việt Nam.
 
 ## Guardrails (bắt buộc, mọi workflow)
 
+0. **Ví dụ trong skill/template phải generic** — không tên công ty/khách hàng/sản phẩm thật, không số
+   liệu thật của người dùng. Dùng `Acme …`, `N …`, `X%`. Gate: `python3 scripts/leak_check.py`.
+
 1. **KHÔNG bịa**: không tự thêm kinh nghiệm, số liệu, chức danh, thời gian, công nghệ user chưa dùng. Thiếu thông tin → hỏi, hoặc đánh dấu `[cần xác nhận: ...]` trong output.
 2. **Skill chỉ đưa vào CV khi có bằng chứng hoặc user xác nhận.** Phân biệt 2 mức:
    - **Có evidence** (map được bullet trong profile.md) → để trong mục Skills bình thường.

@@ -18,7 +18,7 @@ Người đọc: recruiter lướt 3 giây, rồi headhunter search bằng keywo
 - **Headline**: 60 ký tự đầu phải đứng một mình được, vì đó là tất cả những gì hiện trong search,
   comment và invite. Cấu trúc: **câu định vị → stack → 2–3 loại việc**. Không nhồi 10 công nghệ; 3–5 là đủ.
 - **Không đưa số liệu vào Headline** (chốt 2026-10-29): số liệu đã có ở About + Highlights; Headline mà
-  kèm `3M+ orders/year`, `13+ years` thì đọc như bản nén của CV và **mất chỗ cho câu định vị**. Số liệu
+  kèm `N orders/year`, `X+ years` thì đọc như bản nén của CV và **mất chỗ cho câu định vị**. Số liệu
   trong headline chỉ dùng khi con số *chính là* định vị (vd `$10M ARR` với người làm growth).
 - **Ngôi thứ nhất** (`I build high-volume backends …`) đọc khác hẳn 200 headline `Senior X at Y` và khớp
   giọng câu mở About — nhưng chỉ dùng khi câu đó **đứng một mình được**, không phải khẩu hiệu rỗng.
@@ -57,9 +57,9 @@ Ví dụ cùng `e034`:
 
 ```text
 About      : "Make slow platforms fast: 30s+ down to under 1s on a 3M-orders/year platform."
-Highlights : "Scaled the store platform: 500GB+ MySQL, near-1B-row largest table, N+1 queries and
-              sorts spilling to disk. Reworked schema and query paths: >30s → <1s, 50% less CPU,
-              90% fewer OOM errors."
+Highlights : "Scaled the store platform: ~X GB MySQL, one table near N rows, N+1 queries and
+              sorts spilling to disk. Reworked schema and query paths: S1 → S2 seconds, −P% CPU,
+              −Q% OOM errors."
 ```
 
 Nhiều sub-role trong **một** entry (giữ 1 entry để không tạo entry rác): đặt mini-header ngay trong

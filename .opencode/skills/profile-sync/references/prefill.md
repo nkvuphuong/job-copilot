@@ -207,8 +207,8 @@ dùng uid cũ cho bước sau.
 
 ## Thêm role mới → LinkedIn tự đổi HEADLINE (không hỏi)
 
-Đã mắc 2026-10-29: thêm entry `Junior Developer · Nhất Nguyên Phương (2012–2013)` → LinkedIn **ghi đè
-headline** thành `Junior Developer at Nhất Nguyên Phương` (pattern `{title} at {company}` của role mới).
+Đã mắc 2026-10-29: thêm entry `Junior Developer · Acme Corp (2012–2013)` → LinkedIn **ghi đè
+headline** thành `Junior Developer at Acme Corp` (pattern `{title} at {company}` của role mới).
 Headline 106 ký tự vừa duyệt mất, phải mở `Edit intro` điền lại.
 
 Luật:
@@ -254,8 +254,7 @@ URL. Nếu cần verify một entry cụ thể mà trang không render, mở th�
 
 **LinkedIn — dấu hiệu "sẽ tạo entity mới":** gợi ý chỉ có **tên, không logo, không dòng `Company · N
 followers`** = LinkedIn đang đề nghị **tạo company page mới**. Không tự chọn: báo người dùng, vì page tạo
-ra **không xoá được**. Gõ **có dấu** để tên hiển thị đúng (`Nhất Nguyên Phương`, không phải `Nhat Nguyen
-Phuong`).
+ra **không xoá được**. Gõ **có dấu** để tên hiển thị đúng (`Công ty Acme`, không phải `Cong ty Acme`).
 
 Áp cho **company, skill, school, location, title** — mọi field có danh sách gợi ý của nền tảng.
 Bài học từ ITviec: gõ **tên thương mại** ("Acme") chỉ ra gợi ý lộn xộn; entry thật nằm dưới **tên pháp lý tiếng Việt**

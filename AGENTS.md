@@ -42,6 +42,12 @@ Repo code, scripts & docs (only when editing this repo itself):
 - Job-search requests are content work: do NOT impose software lifecycle gates
   (spec, TDD, CI) on them.
 - Dev skills apply only to changes in this repo's own code, scripts and docs.
+- **Tracked files must stay generic.** Skills, docs, scripts and templates are
+  committed → no real employer/client/school/project names and no real business
+  numbers (orders/year, GB, revenue, headcount). Use placeholders (`Acme Corp`,
+  `N orders/year`, `~X GB`). Real identifiers live only in gitignored local data
+  (`profile.md`, `cv/*`, `sync/*`, `jobs/*`) and in the gitignored `.leak-words.txt`
+  denylist. Gate before commit: `python3 scripts/leak_check.py` (also runs in E2E).
 - `profile.md` is the single source of truth; never invent experience. Tailored
   CVs keep their `<!-- eNNN -->` evidence trace; run
   `vn-it-cv/scripts/selfcheck_cv.py` + `vn-it-cv/scripts/ats_check.py` before finishing.

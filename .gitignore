@@ -40,3 +40,6 @@ __pycache__/
 
 # Archify diagram visual-check sidecars (regenerable evidence)
 /docs/diagrams/*.visual-check.*
+
+# Local leak-check denylist (real names — never committed)
+/.leak-words.txt

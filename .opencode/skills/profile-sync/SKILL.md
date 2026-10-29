@@ -76,6 +76,11 @@ cho phù hợp từng nền tảng, không bao giờ thêm kinh nghiệm, số l
     JS mới điền được (như Tom Select) → **bàn giao người dùng**, không lách.
 18. **LinkedIn: ngân sách tính bằng số lần Save,** không chỉ `navigate_page`: **≤2 section / phiên**,
     **≤1 field mỗi lần Save**, và **không 2 phiên trong cùng 1 giờ**. Vượt → dừng, hẹn phiên sau.
+21. **File được commit phải generic.** Skill/doc/script/template **không** chứa tên công ty, khách hàng,
+    trường học, tên dự án thật, hay số liệu thật (`N orders/year`, `~X GB`, doanh thu, headcount). Ví dụ
+    dùng `Acme Corp` / `N` / `X%`. Tên thật chỉ nằm trong file gitignored (`profile.md`, `cv/`, `sync/`,
+    `jobs/`, `.leak-words.txt`). Gate: `python3 scripts/leak_check.py` (chạy trong E2E P5e) — fail là
+    **không được commit**.
 20. **LinkedIn: sau khi Save phải verify, không tin form.** Đọc lại top card + entry vừa sửa: **headline**
     (LinkedIn ghi đè thành `{title} at {company}` khi thêm role), trạng thái `current role`, và giá trị
     typeahead (`Location` từng tự đổi thành một huyện). Checklist 7 dòng: `prefill.md` §"LinkedIn — kỹ thuật
