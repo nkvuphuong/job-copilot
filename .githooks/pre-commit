@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks committing personal profile data or real identifiers.
+# Enable once per clone: git config core.hooksPath .githooks
+exec python3 "$(git rev-parse --show-toplevel)/scripts/leak_check.py" --staged

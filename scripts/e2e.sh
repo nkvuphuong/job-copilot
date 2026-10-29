@@ -69,7 +69,8 @@ Steps that WOULD run with --run:
   P5e sync:       sync status lists 4 platforms; mark then no drift; profile.md
                   change -> drift; pack_check accepts ok, rejects over-limit /
                   unknown evidence; leak_check finds no real identifiers in
-                  tracked files
+                  tracked files, passes --staged, and rejects a force-added
+                  local file (path guard)
   P6  vn-it-cv:   selfcheck_cv.py all -> exit 0; 2 temp negative CVs -> exit 1;
                   render_cv.py -> html with <header>, no <!-- comments
   P7  cleanup:    kill server; remove temp (unless --keep); assert real tree unchanged
@@ -321,6 +322,13 @@ PY
   rm -f sync/_e2e_ok.md sync/_e2e_over.md sync/_e2e_ev.md
   python3 scripts/leak_check.py >/dev/null 2>&1
   assert_true "no real identifiers/metrics in tracked files (leak_check)" $?
+  python3 scripts/leak_check.py --staged >/dev/null 2>&1
+  assert_true "leak_check --staged passes on a clean index" $?
+  printf 'Acme\n' > sync/_e2e_personal.md
+  git add -f sync/_e2e_personal.md >/dev/null 2>&1
+  python3 scripts/leak_check.py --staged >/dev/null 2>&1
+  assert_eq "leak_check rejects a force-added local file -> 1" "$?" "1"
+  git rm -q --cached -f sync/_e2e_personal.md 2>/dev/null; rm -f sync/_e2e_personal.md
 
   step "P6 vn-it-cv"
   if [ -f profile.md ]; then

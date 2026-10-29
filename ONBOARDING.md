@@ -15,6 +15,16 @@ cd job-copilot
 opencode
 ```
 
+Enable the commit leak gate once per clone — hooks are never cloned:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+It runs `scripts/leak_check.py --staged` before every commit and blocks a commit
+that would ship your profile data (`profile.md`, `sync/`, `cv/`, `jobs/`, …), a
+real employer/client name from `.leak-words.txt`, or a real metric.
+
 ## 3. Build your profile
 
 ```bash

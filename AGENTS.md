@@ -48,6 +48,11 @@ Repo code, scripts & docs (only when editing this repo itself):
   `N orders/year`, `~X GB`). Real identifiers live only in gitignored local data
   (`profile.md`, `cv/*`, `sync/*`, `jobs/*`) and in the gitignored `.leak-words.txt`
   denylist. Gate before commit: `python3 scripts/leak_check.py` (also runs in E2E).
+  **Never `git add -f`** a path under those local dirs — the gate has a path guard
+  that fails regardless of `.gitignore`. Enable the pre-commit hook once per clone
+  (`git config core.hooksPath .githooks`; hooks are not cloned). `leak_check.py
+  --history` lists real names still inside old commits — history cannot be
+  un-leaked by editing files, only by rewriting it (ask the user, never do it).
 - `profile.md` is the single source of truth; never invent experience. Tailored
   CVs keep their `<!-- eNNN -->` evidence trace; run
   `vn-it-cv/scripts/selfcheck_cv.py` + `vn-it-cv/scripts/ats_check.py` before finishing.

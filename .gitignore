@@ -7,8 +7,9 @@
 __pycache__/
 *.pyc
 
-# Local DB + migration backups (personal data)
-/jobcopilot.db
+# Local DB + migration backups (personal data). The glob also covers the
+# -wal/-shm/-journal sidecars SQLite creates, which hold raw rows too.
+/jobcopilot.db*
 /jobs/.backup/
 
 # ---------------------------------------------------------------------------
@@ -37,6 +38,7 @@ __pycache__/
 # sync/ = profile packs generated from profile.md (personal data)
 /sync/*
 !/sync/.gitkeep
+!/sync/_example.md
 
 # Archify diagram visual-check sidecars (regenerable evidence)
 /docs/diagrams/*.visual-check.*

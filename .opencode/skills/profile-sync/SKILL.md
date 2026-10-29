@@ -21,7 +21,10 @@ cho phù hợp từng nền tảng, không bao giờ thêm kinh nghiệm, số l
 - `references/prefill.md` — điền form bằng `chrome-devtools` MCP, dừng trước nút Save
 - `scripts/pack_check.py` — gate: vượt giới hạn ký tự hoặc evidence id không tồn tại → fail
 
-**Output:** `sync/<platform>.md` (gitignored — dữ liệu cá nhân).
+**Output:** `sync/<platform>.md` (gitignored — dữ liệu cá nhân). **Chỉ** ghi vào `sync/`:
+không ghi ra repo root, `docs/`, `.opencode/` (những chỗ đó được commit). Hình dạng pack + quy ước
+`Evidence:` nằm ở template được commit `sync/_example.md`; `sync/*.before.md` là bản chụp để khôi phục.
+Trước khi commit bất cứ gì: `python3 scripts/leak_check.py` (path guard chặn cả `git add -f`).
 
 ## Bước 0 — Routing
 

@@ -23,8 +23,9 @@ Full detail: **[WORKFLOW.md](WORKFLOW.md)**.
 | `cv/_example-en.md` | Tailored-CV shape (with `<!-- e001 -->` trace) | ✅ |
 | `offers/_example.md` | Offer-comparison schema | ✅ |
 | `prep/_example.md` | Interview-prep cue card (JD digest + company brief + tech/non-tech) | ✅ |
+| `sync/_example.md` | Shape of a `sync/<platform>.md` profile pack (generic) | ✅ |
 | `WORKFLOW.md` / `ONBOARDING.md` / `PREREQUISITES.md` | Docs | ✅ |
-| `profile.md`, `jobs/*`, `cv/*`, `offers/*`, `prep/*`, `sync/*`, `jobcopilot.db` | **Your personal data** | ❌ gitignored |
+| `profile.md`, `jobs/*`, `cv/*`, `offers/*`, `prep/*`, `sync/*`, `jobcopilot.db*` | **Your personal data** | ❌ gitignored |
 
 Your data stays local. Cloning the repo gives you the tool; you bring your own profile.
 
@@ -33,6 +34,7 @@ Your data stays local. Cloning the repo gives you the tool; you bring your own p
 ```bash
 git clone <this repo> job-copilot
 cd job-copilot
+git config core.hooksPath .githooks                     # enable the commit leak gate (not cloned)
 cp profile.example.md profile.md                       # then fill it (see ONBOARDING.md)
 python3 tools/jobcopilot/cli.py init                   # create jobcopilot.db (state store)
 python3 tools/jobcopilot/server.py                     # UI at http://127.0.0.1:8765
