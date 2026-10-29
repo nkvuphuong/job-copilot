@@ -322,13 +322,15 @@ PY
   rm -f sync/_e2e_ok.md sync/_e2e_over.md sync/_e2e_ev.md
   python3 scripts/leak_check.py >/dev/null 2>&1
   assert_true "no real identifiers/metrics in tracked files (leak_check)" $?
-  python3 scripts/leak_check.py --staged >/dev/null 2>&1
-  assert_true "leak_check --staged passes on a clean index" $?
-  printf 'Acme\n' > sync/_e2e_personal.md
-  git add -f sync/_e2e_personal.md >/dev/null 2>&1
-  python3 scripts/leak_check.py --staged >/dev/null 2>&1
-  assert_eq "leak_check rejects a force-added local file -> 1" "$?" "1"
-  git rm -q --cached -f sync/_e2e_personal.md 2>/dev/null; rm -f sync/_e2e_personal.md
+  # Path guard + --staged need a real git index; run them in a throwaway repo
+  # (this temp tree is a tar snapshot, not a clone).
+  local GT="$TMPBASE/leak-gate"; rm -rf "$GT"; mkdir -p "$GT/scripts"
+  cp scripts/leak_check.py "$GT/scripts/"
+  ( cd "$GT" && git init -q && mkdir sync && printf 'Acme\n' > sync/x.md )
+  ( cd "$GT" && git add -f sync/x.md && python3 scripts/leak_check.py --staged >/dev/null 2>&1 )
+  assert_eq "leak_check --staged rejects a force-added local file -> 1" "$?" "1"
+  ( cd "$GT" && git rm -q --cached sync/x.md && python3 scripts/leak_check.py --staged >/dev/null 2>&1 )
+  assert_eq "leak_check --staged passes a clean index -> 0" "$?" "0"
 
   step "P6 vn-it-cv"
   if [ -f profile.md ]; then
