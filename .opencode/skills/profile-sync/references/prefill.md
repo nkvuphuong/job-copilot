@@ -252,6 +252,11 @@ URL. Nếu cần verify một entry cụ thể mà trang không render, mở th�
 
 ## Field dạng autocomplete / entity matching
 
+**LinkedIn — dấu hiệu "sẽ tạo entity mới":** gợi ý chỉ có **tên, không logo, không dòng `Company · N
+followers`** = LinkedIn đang đề nghị **tạo company page mới**. Không tự chọn: báo người dùng, vì page tạo
+ra **không xoá được**. Gõ **có dấu** để tên hiển thị đúng (`Nhất Nguyên Phương`, không phải `Nhat Nguyen
+Phuong`).
+
 Áp cho **company, skill, school, location, title** — mọi field có danh sách gợi ý của nền tảng.
 Bài học từ ITviec: gõ **tên thương mại** ("Acme") chỉ ra gợi ý lộn xộn; entry thật nằm dưới **tên pháp lý tiếng Việt**
 (`CÔNG TY CỔ PHẦN GIẢI PHÁP ACME`). Tên pháp lý thật lấy từ `profile.md` §4, không đoán.

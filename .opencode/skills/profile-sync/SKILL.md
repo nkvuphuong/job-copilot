@@ -100,6 +100,8 @@ cho phù hợp từng nền tảng, không bao giờ thêm kinh nghiệm, số l
    ```
    ````
 
+   Block ``` là **bản paste nguyên văn** — không chứa `[eNNN]`; trace ghi ở dòng `Evidence:` ngay dưới
+   block (người dùng không paste dòng đó). Đã từng paste lẫn marker lên hồ sơ thật.
    Chỉ gắn `<!-- limit: N -->` khi biết giới hạn thật. Không ghi số ký tự vào file — script tự đếm
    (số ghi tay sẽ lệch ngay sau lần sửa đầu tiên).
 5. Chạy gate: `python3 .opencode/skills/profile-sync/scripts/pack_check.py [sync/<platform>.md]`
