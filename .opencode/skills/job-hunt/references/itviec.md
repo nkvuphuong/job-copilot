@@ -120,3 +120,22 @@ async (url) => {
 - Level filter không có link sẵn → phải dùng query param `job_level_names[]`.
 - Một số JD **thiếu JSON-LD** → fallback DOM mục 3.
 - Salary: đa số ẩn (`You'll love it`); chỉ job nhà tuyển dụng công khai mới có số.
+
+## 5. Agency postings — employer bị che
+
+ITviec có các job đăng qua chính chi nhánh tuyển dụng của họ (`ITviec Recruitment Consulting`). Trang company là
+**công ty tuyển dụng**, không phải employer → `industry: Staffing and Recruiting`, `company size: 1-50`, và
+`jobLocation.addressLocality` thường **rỗng hoặc `Not Available`** trong khi bản trực tiếp của cùng employer ghi rõ quận.
+
+Dấu hiệu trên JD: mở đầu bằng "công ty sản phẩm 100% vốn đầu tư nước ngoài…" thay vì tên công ty; nêu **quy mô team**
+và **danh sách phân hệ được chọn**; bar kinh nghiệm có thể **cao hơn** bản gốc (vd 5 năm → 6 năm + 1 năm lead);
+JD **ngắn hơn** (một cặp đã kiểm: ~3.900 vs ~5.700 ký tự `description`).
+
+Cách xử lý:
+
+1. `dedupe-check` **không** bắt được cặp này (khác `company_slug` + `title_norm`) → theo luật repost ở
+   `job-hunt/SKILL.md` mục "Trước khi score": **mỗi listing một row** (dedupe_key `itviec:<id>` riêng, title
+   đúng như tin đăng), nối bằng `duplicate_of` chỉ sau khi xác minh bằng nội dung JD — không vì cùng agency.
+2. Lấy employer thật từ JD (tên sản phẩm, gói phúc lợi đặc trưng) để chấm domain; không nêu tên → `[confirm]`.
+3. So `JSON-LD.validThrough` của hai listing và nộp **một lần** ở cửa sổ còn hạn lâu hơn.
+4. Địa chỉ làm việc: agency hay giấu → lấy từ bản trực tiếp của cùng employer, đừng suy từ "City, Ho Chi Minh".

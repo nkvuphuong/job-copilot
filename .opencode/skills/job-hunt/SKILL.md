@@ -34,6 +34,46 @@ Biến việc tìm việc thành pipeline có kiểm soát: **quét JD → triag
 ```
 Stale Chrome profile: `pkill -f "user-data-dir=$HOME/.cache/chrome-devtools-mcp/chrome-profile"; sleep 2` rồi `list_pages` lại.
 
+## Routing — vào đâu (trước Phase 1, đừng hỏi scope nếu chưa cần)
+
+| User đưa gì / nói gì | Vào | Hỏi scope? |
+|---|---|---|
+| **link 1 job** · "đánh giá JD này" · "job này thế nào" · dán JD · trỏ file | **Phase 3** → 4 → 5 | **Không** |
+| "quét" · "scan" · "tìm việc <keyword>" | Phase 1 → 2 | Có |
+| "so sánh offer" / "prep cho job X" / "mock interview" | Phase 8 / 6.5 | theo skill con |
+| "theo dõi apply" / "cập nhật trạng thái" | Phase 7 | Không |
+
+Chỉ hỏi scope khi thiếu thật: không có link/JD, hoặc "tìm việc" mà chưa nói keyword/location.
+
+## Trước khi score — agency post & repost
+
+**Company là agency ≠ employer.** Dấu hiệu: `company` là công ty tuyển dụng (kể cả chi nhánh consulting của chính
+job board, vd `ITviec Recruitment Consulting`), industry "Staffing and Recruiting", size nhỏ, JD **không nêu tên
+employer**, `jobLocation.addressLocality` rỗng / `Not Available`, JD ngắn hơn bản gốc và viết lại ("công ty sản phẩm
+100% vốn nước ngoài…").
+
+- **Không** chấm *Loại công ty / domain* theo trang company — sẽ ra điểm rất thấp và drop oan.
+- Suy employer thật từ JD (tên công ty, tên sản phẩm, gói phúc lợi đặc trưng) rồi chấm theo employer đó; không suy
+  được → `[confirm: employer thật]`, không bịa.
+
+**Cùng 1 job, nhiều listing (repost chéo kênh).** `dedupe-check` chỉ bắt trùng khi `company_slug` + `title_norm`
+giống hệt → repost qua agency **luôn lọt**. Trước `add`, so thêm:
+
+1. title token (bỏ hậu tố kiểu `(Fullstack, SaaS)`) với các row cùng seniority;
+2. 3–4 dòng phúc lợi đặc trưng (vd "12 ngày phép chia theo đơn vị 30 phút");
+3. `validThrough` của từng listing (JSON-LD) — cửa sổ nào còn sống.
+
+Khớp → **vẫn tạo row riêng cho từng listing** (mỗi kênh một `dedupe_key` `source:external_id`, `title` đúng như
+tin đăng, `url` riêng) rồi nối bằng `duplicate_of`. Lý do: mỗi listing khác cửa sổ, khác bar, khác kênh nộp —
+gộp vào một row là mất dấu listing đang dùng, và lần trước gộp kiểu đó làm job biến khỏi danh sách. `duplicate_of`
+chỉ đặt khi **đã xác minh bằng nội dung JD**, không bao giờ đặt chỉ vì cùng agency (fuzzy tier-2 của `add` khớp
+`company_slug` + `title` + `location` — đúng cái bẫy: agency đăng nhiều job cùng title cho nhiều khách).
+
+Sửa identity của row đã có (title sai, url đổi, `posted_date`, `notes`) → `cli.py update --json '{"id": …, …}'`;
+`_derive` tự tính lại `dedupe_key` / `title_norm` / `company_slug` / `url_canonical` và giữ `created_at`.
+`add` **không** dùng được để update: trùng `dedupe_key` là nó short-circuit và trả `duplicate`.
+Khi có nhiều listing: nộp **một lần**, chọn cửa sổ còn hạn lâu hơn.
+
 ## Phase 1 — Hỏi scope (dùng `question` tool)
 
 - **Source**: ITViec (verified) · TopCV (verified) · LinkedIn/VietnamWorks (skeleton) · **import** (dán JD/đưa file) · **referral** (nội bộ).
@@ -83,6 +123,11 @@ Score neo vào **Targeting** trong `profile.md` (trọng số + must-have + nice
 3. **`score_rationale`**: 1 dòng, dạng `skill 90 · sen 100 · loc 90 · sal 80 · dom 60 → 88`, kèm gap chính. Đây là thứ để audit con số, không chỉ `notes`.
 4. `gap_skills[]` = skill JD yêu cầu mà profile không có evidence.
 5. Chỉ lưu nếu qua gate; dưới ngưỡng (mặc định < 60) thì báo + hỏi có lưu không.
+6. **Không chờ recruiter trả lời trước khi nộp.** Job board VN (ITViec/TopCV) gần như không trả lời tin
+   nhắn riêng của từng ứng viên → đừng đặt `next_action` = "hỏi HR rồi mới quyết". Ẩn số (onsite mấy
+   ngày, phân hệ nào, bar có cứng không) xử lý bằng **cover letter**: nêu thẳng gap + nguyện vọng, hoặc
+   để dành cho vòng screen. Chỉ giữ bước hỏi trước khi nộp khi có **kênh liên hệ thật** (referral, HR
+   ghi trong JD, email tuyển dụng).
 
 ## Phase 5 — Lưu: raw JD ra file + state vào DB
 
