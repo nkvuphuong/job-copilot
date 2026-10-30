@@ -10,6 +10,14 @@ It is **not** an auto-apply bot. A human reviews and submits every application. 
 
 Full detail: **[WORKFLOW.md](WORKFLOW.md)**.
 
+## Screenshots
+
+The local UI (`http://127.0.0.1:8765`) on throwaway demo data — placeholder companies, no personal data:
+
+![Dashboard: funnel by status, job list with score, derived stage, next action, profile-sync drift](docs/screenshots/dashboard.png)
+
+![Job detail: score breakdown, missing skills, CV versions, interview prep, raw JD](docs/screenshots/job-detail.png)
+
 ## What's in the repo
 
 | Path | What it is | Shared? |
@@ -49,8 +57,8 @@ scanning/tailoring. Existing Markdown is imported once with `cli.py import`.
 Then, in opencode, just talk:
 - "set up my profile from this CV: /path/to/cv.pdf"
 - "scan ITViec for senior backend in HCMC, 3 pages"
-- "tailor a CV for that Rakus job"
-- "I applied to Rakus — log it"
+- "tailor a CV for that Acme job"
+- "I applied to Acme — log it"
 - "prep me for the Acme interview"
 - "mock interview me for the Acme tech round"
 - "update my LinkedIn profile" (pack + prefill; **you** press Save)
