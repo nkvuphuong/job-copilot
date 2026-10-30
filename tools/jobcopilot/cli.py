@@ -115,6 +115,21 @@ def cmd_add(args) -> int:
     return 0
 
 
+def cmd_update(args) -> int:
+    """Patch a job row; identity fields are re-derived from url/company/title."""
+    conn = db.connect(args.db)
+    patch = json.loads(args.json)
+    existing = db.get_job(conn, patch.get("id", ""))
+    if existing is None:
+        print(f"error: unknown job {patch.get('id', '')}", file=sys.stderr)
+        return 2
+    row = _derive({**dict(existing), **patch})
+    db.upsert_job(conn, row)
+    print(_dump({"status": "updated", "id": row["id"], "title": row["title"],
+                 "dedupe_key": row["dedupe_key"]}))
+    return 0
+
+
 def cmd_run(args) -> int:
     conn = db.connect(args.db)
     if args.action == "start":
@@ -381,6 +396,9 @@ def main(argv=None) -> int:
     p_add = sub.add_parser("add", help="register a scored job from JSON")
     p_add.add_argument("--json", required=True)
 
+    p_upd = sub.add_parser("update", help="patch a job row from JSON (identity re-derived)")
+    p_upd.add_argument("--json", required=True)
+
     p_run = sub.add_parser("run", help="scan session lifecycle")
     run_sub = p_run.add_subparsers(dest="action", required=True)
     rs = run_sub.add_parser("start")
@@ -451,7 +469,8 @@ def main(argv=None) -> int:
     if args.cmd == "restore" and not args.into:
         args.into = str(db.REPO_ROOT / "jobcopilot-restore.db")
     table = {"init": cmd_init, "selfcheck": cmd_selfcheck, "import": cmd_import,
-             "dedupe-check": cmd_dedupe_check, "add": cmd_add, "run": cmd_run,
+             "dedupe-check": cmd_dedupe_check, "add": cmd_add, "update": cmd_update,
+             "run": cmd_run,
              "status": cmd_status, "report": cmd_report, "prep": cmd_prep,
              "rm": cmd_rm, "sync": cmd_sync,
              "profile-ver": cmd_profile_ver, "cv-add": cmd_cv_add,

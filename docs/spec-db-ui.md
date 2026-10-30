@@ -34,6 +34,7 @@ python3 tools/jobcopilot/cli.py init                      # tạo DB + schema n�
 python3 tools/jobcopilot/cli.py import                    # migrate jobs/*.md frontmatter -> DB, strip frontmatter
 python3 tools/jobcopilot/cli.py dedupe-check <url> [--source S --external-id E --company C --title T --location L]
 python3 tools/jobcopilot/cli.py add --json '<job json>'   # đăng ký 1 job mới (agent dùng sau khi extract)
+python3 tools/jobcopilot/cli.py update --json '<patch json>'  # sửa row đã có; identity fields re-derived
 python3 tools/jobcopilot/cli.py run start --source itviec --params '<json>'
 python3 tools/jobcopilot/cli.py run finish <run_id> --counts '<json>'
 python3 tools/jobcopilot/cli.py status <job_id> --to applied [--at 2026-10-05 --method portal] [--note ...]
@@ -53,7 +54,7 @@ tools/jobcopilot/
   db.py          # schema, connection, CRUD thuần (nguồn ghi state duy nhất)
   identity.py    # url_canonical, dedupe_key, normalize title/company, tier-2 fuzzy
   migrate.py     # đọc frontmatter jobs/*.md -> DB; strip frontmatter (giữ raw JD)
-  cli.py         # argparse; import/init/add/dedupe-check/run/status/report/serve/selfcheck
+  cli.py         # argparse; import/init/add/update/dedupe-check/run/status/report/serve/selfcheck
   server.py      # http.server: phục vụ ui/ + JSON API -> gọi db.py
   ui/index.html  # dashboard + list/filter + form đổi state (JS thuần)
 docs/
@@ -176,7 +177,7 @@ jc prep show <job_id>                             # JSON: prep + rounds
 ## Success Criteria (B5.1)
 
 1. `jc init` thêm 2 bảng mới mà không phá bảng cũ (idempotent).
-2. Với 2 job `applied` (GFG, Rakus): tạo cue card `prep/<job-id>.md` (agent) + `jc prep open` → row `prep` status `draft`.
+2. Với 2 job `applied` (Acme, Globex): tạo cue card `prep/<job-id>.md` (agent) + `jc prep open` → row `prep` status `draft`.
 3. UI list hiện badge Prep; drawer đổi `prep_status` `draft→ready→done` (ghi `updated_at`).
 4. `jc prep round-add … --type mock` lưu 1 row `prep_rounds`; UI drawer hiện round đó.
 5. `stage` của job có prep = `… ,prep`.

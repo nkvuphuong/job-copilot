@@ -170,6 +170,10 @@ run_suite() {
   python3 "$CLI_REL" add --json '{"id":"2026-10-import-acme-be-r2","title":"Backend Engineer","company":"Acme","source":"import","url":"local://acme2","location":"HCMC"}' >/dev/null
   local dup; dup=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select duplicate_of from jobs where id='2026-10-import-acme-be-r2'\").fetchone()[0])")
   assert_eq "repost flagged duplicate_of" "$dup" "2026-10-import-acme-be"
+  python3 "$CLI_REL" update --json '{"id":"2026-10-import-acme-be-r2","title":"Backend Engineer (Go)","duplicate_of":""}' >/dev/null
+  assert_true "update patches row" $?
+  local upd; upd=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select title||'|'||title_norm||'|'||coalesce(duplicate_of,'') from jobs where id='2026-10-import-acme-be-r2'\").fetchone()[0])")
+  assert_eq "update re-derives identity" "$upd" "Backend Engineer (Go)|backend engineer go|"
   python3 "$CLI_REL" status 2026-10-import-acme-be --to applied --at 2026-10-05 --method portal --followup-at 2026-09-01 >/dev/null
   assert_true "status applied" $?
   local ev; ev=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select from_status||'->'||to_status from job_events where job_id='2026-10-import-acme-be'\").fetchone()[0])")
