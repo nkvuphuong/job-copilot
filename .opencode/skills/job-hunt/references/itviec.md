@@ -133,9 +133,12 @@ JD **ngắn hơn** (một cặp đã kiểm: ~3.900 vs ~5.700 ký tự `descript
 
 Cách xử lý:
 
-1. `dedupe-check` **không** bắt được cặp này (khác `company_slug` + `title_norm`) → theo luật repost ở
-   `job-hunt/SKILL.md` mục "Trước khi score": **mỗi listing một row** (dedupe_key `itviec:<id>` riêng, title
-   đúng như tin đăng), nối bằng `duplicate_of` chỉ sau khi xác minh bằng nội dung JD — không vì cùng agency.
+1. `dedupe-check` **không** bắt được cặp này (khác `company_slug` + `title_norm`) → chạy
+   `dedupe-check '<url>' --jd-file jobs/<id>.md`: tool so token *số + đơn vị* / acronym trong JD và trả
+   `repost_candidates` + `probable_employer [infer]`. Cặp agency ↔ bản trực tiếp của cùng employer (cặp đã kiểm): score **0,92**, 12 JD còn lại 0
+   false positive. Theo luật repost ở `job-hunt/SKILL.md` mục "Trước khi score": **mỗi listing một row**
+   (dedupe_key `itviec:<id>` riêng, title đúng như tin đăng), nối bằng `duplicate_of` chỉ sau khi so **scope**
+   — fingerprint phúc lợi chỉ xác định *khách hàng*, không xác định *vacancy*.
 2. Lấy employer thật từ JD (tên sản phẩm, gói phúc lợi đặc trưng) để chấm domain; không nêu tên → `[confirm]`.
 3. So `JSON-LD.validThrough` của hai listing và nộp **một lần** ở cửa sổ còn hạn lâu hơn.
 4. Địa chỉ làm việc: agency hay giấu → lấy từ bản trực tiếp của cùng employer, đừng suy từ "City, Ho Chi Minh".

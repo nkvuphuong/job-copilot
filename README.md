@@ -53,6 +53,9 @@ Only Python 3 (stdlib) is needed — no deps, no Docker. State (status, dedupe,
 runs) lives in `jobcopilot.db` (gitignored); content stays in `jobs/`, `cv/`,
 `prep/`, `offers/`, `profile.md`. Move your state on the UI; let the agent do the
 scanning/tailoring. Existing Markdown is imported once with `cli.py import`.
+Before saving a job, `cli.py dedupe-check <url> --jd-file jobs/<id>.md` also flags
+cross-channel reposts (an agency copy of a named employer's post) by the numbers
+and terms that survive a rewrite, and names the probable employer as `[infer]`.
 
 Then, in opencode, just talk:
 - "set up my profile from this CV: /path/to/cv.pdf"

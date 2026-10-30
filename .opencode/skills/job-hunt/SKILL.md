@@ -69,6 +69,24 @@ gộp vào một row là mất dấu listing đang dùng, và lần trước g�
 chỉ đặt khi **đã xác minh bằng nội dung JD**, không bao giờ đặt chỉ vì cùng agency (fuzzy tier-2 của `add` khớp
 `company_slug` + `title` + `location` — đúng cái bẫy: agency đăng nhiều job cùng title cho nhiều khách).
 
+Bước 1–3 ở trên làm được bằng máy:
+
+```bash
+python3 tools/jobcopilot/cli.py dedupe-check '<url>' --jd-file jobs/<id>.md
+# → repost_candidates: [{score, shared_tokens, company}] + probable_employer {confidence: "infer"}
+```
+
+Tool so **token bền qua viết lại** — cặp *số + đơn vị* (`170.000 vnd`, `14 tháng`, `30 phút`) và acronym (`MVP`,
+`KPI`) — rồi lọc token phổ biến. Cặp agency ↔ bản trực tiếp của cùng employer (đã kiểm trên một cặp thật): **0,92**; 12 JD còn lại trong repo: **0** false positive.
+
+Đọc kết quả đúng cách:
+
+- **Fingerprint phúc lợi xác định *khách hàng*, không xác định *vacancy*.** Cùng một bộ phúc lợi có thể là hai req
+  khác team (một bản thêm phân hệ mới, bar khác). Trước khi gán `duplicate_of`, so **scope**: phân hệ, bar kinh
+  nghiệm, yêu cầu ngôn ngữ, địa điểm. Khác scope → **hai req riêng**, ghi rõ chỗ khác.
+- `probable_employer` là **suy đoán** (`[infer]`) — dùng để chấm domain, không ghi như fact vào CV/cover letter.
+- Cảnh báo là **non-blocking**: tool in ra stderr, `add` vẫn ghi row. Chặn cứng sẽ bỏ mất req thật.
+
 Sửa identity của row đã có (title sai, url đổi, `posted_date`, `notes`) → `cli.py update --json '{"id": …, …}'`;
 `_derive` tự tính lại `dedupe_key` / `title_norm` / `company_slug` / `url_canonical` và giữ `created_at`.
 `add` **không** dùng được để update: trùng `dedupe_key` là nó short-circuit và trả `duplicate`.
