@@ -17,7 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import db  # noqa: E402
 from identity import (company_slug, dedupe_key, extract_external_id,  # noqa: E402
-                      find_duplicates, title_norm, url_canonical)
+                      find_duplicates, jd_tokens, repost_candidates, title_norm,
+                      url_canonical)
 
 _LIST_COLS = {"skills_required": "skills_required_json",
               "skills_nice": "skills_nice_json",
@@ -59,14 +60,54 @@ def cmd_import(args) -> int:
     return 0
 
 
+_JD_MARKER = "\n## Job description"
+
+
+def _jd_text(path) -> str:
+    """Job content only — drop the display header (title/company/url/notes).
+
+    Newer files have a `## Job description` marker; older imported ones just put
+    the header block first, separated by a blank line.
+    """
+    text = Path(path).read_text(encoding="utf-8")
+    i = text.find(_JD_MARKER)
+    if i != -1:
+        return text[i:]
+    j = text.find("\n\n")
+    return text[j:] if j != -1 else text
+
+
+def _stored_jds(conn, *exclude: str) -> list[dict]:
+    """Rows that still have a `jobs/<id>.md` — the only place a JD body lives."""
+    out = []
+    for r in conn.execute("SELECT id, company, title FROM jobs"):
+        p = db.REPO_ROOT / "jobs" / f"{r['id']}.md"
+        if r["id"] not in exclude and p.exists():
+            out.append({"id": r["id"], "company": r["company"], "title": r["title"],
+                        "text": _jd_text(p)})
+    return out
+
+
 def cmd_dedupe_check(args) -> int:
     conn = db.connect(args.db)
     hits = find_duplicates(conn, source=args.source, external_id=args.external_id,
                            url=args.url, company=args.company, title=args.title,
                            location=args.location)
+    reps = []
+    if args.jd_file:
+        # `--jd-file jobs/<id>.md` is a normal way to ask "is this a repost of
+        # something I already have?" — don't match the row against itself.
+        skip = hits["exact"]["id"] if hits["exact"] else Path(args.jd_file).stem
+        reps = repost_candidates(_jd_text(args.jd_file), _stored_jds(conn, skip))
+    probable = None
+    if reps and reps[0]["company"]:
+        # Client of an agency post is inferred from the perk/scope fingerprint — never a fact.
+        probable = {"company": reps[0]["company"], "confidence": "infer"}
     print(_dump({"key": dedupe_key(args.source, args.external_id, args.url),
                  "exact": _row_to_dict(hits["exact"]),
-                 "fuzzy": [_row_to_dict(r) for r in hits["fuzzy"]]}))
+                 "fuzzy": [_row_to_dict(r) for r in hits["fuzzy"]],
+                 "repost_candidates": reps,
+                 "probable_employer": probable}))
     return 0
 
 
@@ -95,6 +136,7 @@ def cmd_add(args) -> int:
         print("error: 'id' required", file=sys.stderr)
         return 2
     run_id = payload.pop("run_id", None)
+    jd_file = payload.pop("jd_file", "")
     row = _derive(payload)
     hits = find_duplicates(conn, source=row.get("source", ""),
                            external_id=row.get("external_id", ""),
@@ -103,6 +145,15 @@ def cmd_add(args) -> int:
     if hits["exact"] is not None:
         print(_dump({"status": "duplicate", "exact": hits["exact"]["id"]}))
         return 0
+    if jd_file:
+        reps = repost_candidates(_jd_text(jd_file),
+                                 _stored_jds(conn, row["id"], Path(jd_file).stem))
+        if reps:
+            top = reps[0]
+            print(f"warning: JD overlaps {top['id']} (score {top['score']}, "
+                  f"shared: {', '.join(top['shared_tokens'])}); probable employer "
+                  f"{top['company'] or '?'} [infer] — check scope before setting duplicate_of",
+                  file=sys.stderr)
     if hits["fuzzy"] and not row.get("duplicate_of"):
         row["duplicate_of"] = hits["fuzzy"][0]["id"]
     if run_id:
@@ -360,6 +411,22 @@ def cmd_selfcheck(args) -> int:
         assert got == want, f"case {i} {fn.__name__}{inargs} -> {got!r} != {want!r}"
     assert dedupe_key(url="https://a.com/x") == "url:https://a.com/x"
     assert dedupe_key() == ""
+    # repost detection: same facts, re-written wording -> flagged; unrelated -> silent.
+    # (synthetic fixtures: committed files must stay free of real employers)
+    acme_a = ("Phúc lợi: 137.000 VND/người/tháng team building; 9 tháng lương; "
+              "11 ngày phép chia theo đơn vị 17 phút; thưởng KPI.")
+    acme_b = ("Chúng tôi trả 9 tháng lương mỗi năm. Nghỉ 11 ngày phép, chia nhỏ "
+              "theo 17 phút. Team building 137.000 VND/người/tháng, thưởng KPI.")
+    globex = "Bảo hiểm sức khỏe, 15 ngày phép, lương 13 tháng, review 1 lần/năm."
+    stored = [{"id": "acme", "company": "Acme", "title": "BE", "text": acme_a},
+              {"id": "globex", "company": "Globex", "title": "BE", "text": globex}]
+    assert jd_tokens("170.000đ/người/tháng") == jd_tokens("170.000 VND/người/tháng")
+    reps = repost_candidates(acme_b, stored)
+    assert [c["id"] for c in reps] == ["acme"], reps
+    # a different number is counter-evidence, not a match
+    assert "137000:vnd" in reps[0]["shared_tokens"], reps
+    assert repost_candidates(globex, stored) == []
+    assert repost_candidates("", stored) == []
     # rm cascade: children (events/cv/prep) go with the job; unknown -> False
     c = db.connect(":memory:")
     db.init_schema(c)
@@ -392,6 +459,8 @@ def main(argv=None) -> int:
     p_dc.add_argument("--company", default="")
     p_dc.add_argument("--title", default="")
     p_dc.add_argument("--location", default="")
+    p_dc.add_argument("--jd-file", dest="jd_file", default="",
+                      help="job content file -> cross-channel repost candidates")
 
     p_add = sub.add_parser("add", help="register a scored job from JSON")
     p_add.add_argument("--json", required=True)

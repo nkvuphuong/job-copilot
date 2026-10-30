@@ -85,6 +85,15 @@ Content files giữ nguyên: `jobs/<id>.md` (sau migrate: vài dòng header hi�
 - Tier 1 (auto-block): `dedupe_key = source||':'||external_id`, fallback `url_canonical` (bỏ query/utm/fragment).
 - Tier 2 (KHÔNG auto-skip): khớp `company_slug + title_norm + location` → set `duplicate_of`, UI cho người xác nhận.
 - Lý do tier 2 không tự chặn: re-post có thể đổi lương/level → là cơ hội mới.
+- Tier 3 — **repost theo nội dung** (`dedupe-check --jd-file <path>`): `identity.jd_tokens()` lấy token bền qua
+  viết lại — cặp *số + đơn vị* (`170000:vnd`, `14:tháng`, `30:phút`, `50:%`) và acronym ≥2 chữ hoa (`mvp`, `kpi`);
+  token xuất hiện ở >30% JD đã lưu là boilerplate → loại. `repost_candidates` trả `{score, shared_tokens}`
+  khi ≥3 token chung, ≥2 token số, containment ≥0,35; `probable_employer` = company của candidate đầu, **luôn**
+  `confidence: "infer"`. **Advisory**: `add --json` (kèm `jd_file`) in cảnh báo ra stderr, không chặn, không tự
+  set `duplicate_of` — một agency có thể mở rộng scope thành req khác.
+  - Chống dương tính giả: chỉ tech acronym (`graphql`, `restful`) → dưới `min_numeric` nên không flag; đo trên
+    12 JD thật trong repo: đúng cặp agency↔employer (0,92), còn lại 0 hit.
+  - `--jd-file jobs/<id>.md` tự loại chính row đó khỏi candidate (soi lại một job đã lưu).
 
 ## Code Style
 

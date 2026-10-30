@@ -174,6 +174,11 @@ run_suite() {
   assert_true "update patches row" $?
   local upd; upd=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select title||'|'||title_norm||'|'||coalesce(duplicate_of,'') from jobs where id='2026-10-import-acme-be-r2'\").fetchone()[0])")
   assert_eq "update re-derives identity" "$upd" "Backend Engineer (Go)|backend engineer go|"
+  # repost detection runs on JD content: same perks, rewritten wording, different company
+  printf '# Acme\n\n· 137.000 VND/người/tháng team building · 9 tháng lương · 11 ngày phép chia theo 17 phút · thưởng KPI\n' > jobs/2026-10-import-acme-be.md
+  printf '## Job description\n\nChúng tôi trả 9 tháng lương, 11 ngày phép nghỉ theo 17 phút, team building 137.000 VND/người/tháng, thưởng KPI.\n' > repost-probe.md
+  local rc; rc=$(python3 "$CLI_REL" dedupe-check "https://example.com/repost-probe" --jd-file repost-probe.md | python3 -c 'import sys,json;d=json.load(sys.stdin);c=d["repost_candidates"];print(len(c), c[0]["id"] if c else "", (d["probable_employer"] or {}).get("confidence",""))')
+  assert_eq "repost candidate from JD content" "$rc" "1 2026-10-import-acme-be infer"
   python3 "$CLI_REL" status 2026-10-import-acme-be --to applied --at 2026-10-05 --method portal --followup-at 2026-09-01 >/dev/null
   assert_true "status applied" $?
   local ev; ev=$(python3 -c "import sqlite3;print(sqlite3.connect('jobcopilot.db').execute(\"select from_status||'->'||to_status from job_events where job_id='2026-10-import-acme-be'\").fetchone()[0])")
