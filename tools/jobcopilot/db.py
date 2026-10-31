@@ -1,11 +1,14 @@
 """SQLite store. Single write path for state (CLI + server both call this). Pure: no HTTP."""
 from __future__ import annotations
 
+import os
 import sqlite3
 from datetime import date
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+# Content + DB root. Docker sets JC_DATA=/data so the volume is the only state;
+# unset (normal host use) -> the repo itself, unchanged.
+REPO_ROOT = Path(os.environ.get("JC_DATA") or Path(__file__).resolve().parents[2])
 DEFAULT_DB = REPO_ROOT / "jobcopilot.db"
 SCHEMA_VERSION = 3
 

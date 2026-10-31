@@ -1,0 +1,25 @@
+services:
+  jc:
+    build:
+      context: .
+      args:
+        UID: ${JC_UID:-1000}
+        GID: ${JC_GID:-1000}
+    image: jobcopilot:local
+    # UI has no auth — loopback only. Change to "8765:8765" on purpose, not by accident.
+    # JC_PUBLISH lets a second instance (test run) use another host port.
+    ports:
+      - "127.0.0.1:${JC_PUBLISH:-8765}:8765"
+    volumes:
+      - jc-data:/data
+      # Same files visible to a host agent: replace the line above with
+      #   - ./data:/data        and run host commands with JC_DATA=$PWD/data
+    environment:
+      JC_HOST: 0.0.0.0
+      JC_PORT: "8765"
+    restart: unless-stopped
+
+volumes:
+  # Fixed name: backup/import commands don't depend on the compose project dir.
+  jc-data:
+    name: jobcopilot-data
