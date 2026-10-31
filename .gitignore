@@ -12,9 +12,6 @@ __pycache__/
 /jobcopilot.db*
 /jobs/.backup/
 
-# Docker: bind-mount variant of the /data volume (JC_DATA=./data)
-/data/
-
 # ---------------------------------------------------------------------------
 # LOCAL (personal data — never shared). Each user creates their own.
 # The matching *.example.md files are shipped as templates.

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,7 +14,7 @@ import db  # noqa: E402
 import render  # noqa: E402
 
 UI = Path(__file__).resolve().parent / "ui" / "index.html"
-REPO_ROOT = db.REPO_ROOT  # one source of truth (JC_DATA in Docker)
+REPO_ROOT = Path(__file__).resolve().parents[2]
 _LIST_COLS = ("id", "company", "title", "source", "seniority", "location", "remote",
               "status", "match_score", "score_rationale", "gap_skills_json",
               "verdict", "duplicate_of", "followup_at", "next_action", "applied_at",
@@ -236,15 +235,12 @@ def main(argv=None) -> int:
     import argparse
     p = argparse.ArgumentParser(prog="jc-serve")
     p.add_argument("--db", default=str(db.DEFAULT_DB))
-    p.add_argument("--host", default=os.environ.get("JC_HOST", "127.0.0.1"),
-                   help="bind address (Docker sets JC_HOST=0.0.0.0)")
-    p.add_argument("--port", type=int, default=int(os.environ.get("JC_PORT", 8765)))
+    p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
     Handler.db_path = a.db
     db.init_schema(db.connect(a.db))  # self-init if DB missing
-    srv = ThreadingHTTPServer((a.host, a.port), Handler)
-    shown = "127.0.0.1" if a.host in ("0.0.0.0", "") else a.host
-    print(f"jobcopilot UI: http://{shown}:{a.port}  (db={a.db})  Ctrl-C to stop")
+    srv = ThreadingHTTPServer(("127.0.0.1", a.port), Handler)
+    print(f"jobcopilot UI: http://127.0.0.1:{a.port}  (db={a.db})  Ctrl-C to stop")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

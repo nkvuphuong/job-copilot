@@ -20,8 +20,6 @@ personal/global and you must set them up once.
 | Tool `jev` + auth | `~/.config/opencode/tools/jev.ts` | Triage model. Needs `OPENCODE_API_KEY` or `opencode auth login` (OpenCode Zen). |
 | Skill `jev-triage` | `~/.config/opencode/skills/jev-triage/` | Primer for `jev`; kept global on purpose. |
 | `uv` (optional) | https://docs.astral.sh/uv/ | Only to extract text from a CV PDF without installing anything. |
-| Docker (optional) | https://docs.docker.com/get-docker/ | Only if you run the UI/CLI in a container (`docker compose up`). Not needed for the agent. |
-| Google Chrome (optional) | chrome.google.com | Only `vn-it-cv/scripts/export_cv.py` needs it, to print a CV to PDF. Not in the Docker image. |
 
 ### Smoke test jev
 
