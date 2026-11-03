@@ -10,15 +10,17 @@ Verify 2026-10-28 (LinkedIn Help + nhiều nguồn đo editor độc lập, số
 
 | Field | Giới hạn | Hiển thị trước khi cắt |
 |---|---|---|
-| Headline | 220 | ~60–70 trong search, comment, invite |
+| Headline | 220 | card search desktop: **không cắt** (đo 2026-11-03); cắt ở sidebar, comment, invite, mobile |
 | About | 2600 | ~300 trên profile |
 | Experience title | 100 | — |
 | **Highlights** (tên thật của field description trong role) | 2000 / role | counter `0/2,000` hiện dưới ô |
 | Skill (mỗi skill) | 80 | — |
-| Số skill tối đa | 50 | — |
+| Số skill tối đa | **100** (verify 2026-11-03, help a549047) | — |
 
 Ghi chú:
-- Headline chỉ ~60–70 ký tự hiện trong search → **keyword chính phải nằm trong 60 ký tự đầu**.
+- Headline **không bị cắt** trên card search desktop (đo 2026-11-03, chuỗi >100 ký tự hiện đủ 2–3 dòng);
+  vẫn giữ **keyword chính trong 60 ký tự đầu** vì surface hẹp (sidebar, comment, invite, mobile) cắt ở
+  đó, và vì đó là vùng đọc được của mắt. Phương pháp đo: `headline-research.md` §4.
 - About: ~300 ký tự đầu là "hook"; phần sau chỉ hiện khi bấm "see more".
 - LinkedIn **không** cho link bấm được trong About/bio → email ghi dạng text.
 - **Không có undo / version history:** ghi đè About là mất bản cũ → backup ra
@@ -33,6 +35,10 @@ Ghi chú:
   Sau mỗi Save phải đọc lại DOM.
 - **Không dùng API trực tiếp (Voyager):** cần `JSESSIONID` + `csrf-token`, request shape khác traffic SPA,
   rate limit theo account, có thể trả `200` mà không lưu. Rủi ro **cao hơn** lái browser.
+- **Skills:** tối đa **100**; LinkedIn tự chia 3 nhóm (*Industry Knowledge / Tools & Technologies /
+  Interpersonal Skills*) và **không chuyển skill sang nhóm khác** (help a568137). Thứ tự = thứ hiển thị,
+  **3 skill đầu lên card**, reorder chỉ bằng drag. Thêm/xoá = tầng 2 → người dùng thao tác, agent chỉ
+  đưa danh sách đúng tên taxonomy (verify bằng typeahead, đừng đoán tên).
 - **Phân tầng:** *tầng 1* Headline / About / Location / Contact → agent điền được; *tầng 2* Skills /
   Education → người dùng; *tầng 3* Experience (typeahead + date picker + checkbox "currently") →
   người dùng copy từ pack. Chi tiết + pre-flight: `prefill.md` §"LinkedIn — ưu tiên an toàn tài khoản".

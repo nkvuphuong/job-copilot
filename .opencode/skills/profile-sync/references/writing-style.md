@@ -15,13 +15,21 @@ Cùng một `profile.md`, bốn cách đọc khác nhau. Sai style là mất tí
 
 Người đọc: recruiter lướt 3 giây, rồi headhunter search bằng keyword.
 
-- **Headline**: 60 ký tự đầu phải đứng một mình được, vì đó là tất cả những gì hiện trong search,
-  comment và invite. Cấu trúc: **câu định vị → stack → 2–3 loại việc**. Không nhồi 10 công nghệ; 3–5 là đủ.
+- **Headline**: **title của user đứng đầu, verbatim** — card #1 của một query thường là headline trùng
+  khít đúng chuỗi query đó. Cấu trúc: **title → stack (3–5 token) → 1 vế khác biệt**. Không nhồi 10
+  công nghệ. Chọn `Engineer` hay `Developer` theo cái thị trường gõ nhiều hơn (`headline-research.md` §2).
+- **~60 ký tự đầu là vùng an toàn**, không phải vì search cắt: đo 2026-11-03 trên card search desktop,
+  headline >100 ký tự vẫn hiện đủ (2–3 dòng). Chỗ cắt thật là surface hẹp (sidebar, comment, invite,
+  mobile). Vì vậy title + keyword chính phải nằm trong 60 ký tự đầu; động từ dẫn dắt đứng **sau**.
+- **Title thứ hai** (khi user cần bắt hai pool rời nhau, vd backend vs full-stack): đặt **trong ngoặc
+  ngay sau title chính** — `Senior A Engineer (B)`. Dạng `A / B` phá cụm `A` và làm mất thứ hạng
+  exact-phrase của chính title mạnh nhất.
 - **Không đưa số liệu vào Headline** (chốt 2026-10-29): số liệu đã có ở About + Highlights; Headline mà
   kèm `N orders/year`, `X+ years` thì đọc như bản nén của CV và **mất chỗ cho câu định vị**. Số liệu
   trong headline chỉ dùng khi con số *chính là* định vị (vd `$10M ARR` với người làm growth).
-- **Ngôi thứ nhất** (`I build high-volume backends …`) đọc khác hẳn 200 headline `Senior X at Y` và khớp
-  giọng câu mở About — nhưng chỉ dùng khi câu đó **đứng một mình được**, không phải khẩu hiệu rỗng.
+- **Ngôi thứ nhất** (`I build …`) khớp giọng câu mở About, nhưng **chỉ được đứng sau title** — đặt lên
+  đầu là tiêu 20–30 ký tự đắt nhất vào chữ không ai search. Khi đã dùng title-first thì headline không
+  còn ngôi thứ nhất; muốn giữ giọng thì để một vế ngắn ở cuối.
 - **About**:
   1. Câu 1 (trong ~300 ký tự đầu) = hook có số liệu, không phải "I am a passionate developer".
   2. 3–5 bullet "what I am hired to do", mỗi bullet một loại việc (hiệu năng / migration / dữ liệu / delivery).

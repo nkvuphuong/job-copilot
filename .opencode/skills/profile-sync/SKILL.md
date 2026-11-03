@@ -18,6 +18,7 @@ cho phù hợp từng nền tảng, không bao giờ thêm kinh nghiệm, số l
 **Files:**
 - `references/platforms.md` — field + giới hạn ký tự từng nền tảng, kèm trạng thái verify
 - `references/writing-style.md` — cách viết cho từng nền tảng (khác nhau thật, không dùng chung template)
+- `references/headline-research.md` — đo trước khi viết headline: đo profile được thấy từ đâu, corpus cầu/cung, kiểm lại sau 2–4 tuần
 - `references/prefill.md` — điền form bằng `chrome-devtools` MCP, dừng trước nút Save
 - `scripts/pack_check.py` — gate: vượt giới hạn ký tự hoặc evidence id không tồn tại → fail
 
@@ -31,6 +32,7 @@ Trước khi commit bất cứ gì: `python3 scripts/leak_check.py` (path guard 
 | User nói | Workflow |
 |---|---|
 | "cập nhật LinkedIn", "sync profile", "làm pack cho ITviec/TopCV/GitHub" | **GENERATE** |
+| "headline của tôi có ổn không", "sao không ai tìm thấy tôi", "LinkedIn đề xuất tôi cho ai" | **HEADLINE AUDIT** (`references/headline-research.md`) |
 | "điền giúp tôi lên LinkedIn/ITviec", "prefill" | **PREFILL** (cần pack có sẵn) |
 | "tôi đã lưu rồi", "đánh dấu đã sync" | **MARK** |
 | "hồ sơ có lệch không", "profile đổi rồi" | **DRIFT** |
@@ -116,6 +118,16 @@ Trước khi commit bất cứ gì: `python3 scripts/leak_check.py` (path guard 
    → phải in `PACK CHECK OK`.
 6. Báo user: field nào đã đổi, field nào cần họ quyết định (vd chọn repo để pin), và nhắc bước tiếp
    (PREFILL hoặc tự paste).
+
+## Workflow HEADLINE AUDIT
+
+Theo `references/headline-research.md`. Thứ tự bắt buộc: **đo profile được nhìn thấy từ đâu**
+(`search appearances` vs `network recommendations`) → corpus phía cầu (JD + job board) → corpus phía
+cung (headline của người đang thắng query) → viết → hẹn đo lại sau 2–4 tuần.
+
+Nếu search là phần nhỏ trong tổng lượt xuất hiện: nói thẳng với user rằng headline không phải nút
+thắt, đừng hứa. Ghi số đo **trước** vào `sync/<platform>.md` cùng ngày — không có mốc so sánh thì
+không biết lần sửa sau có ăn không.
 
 ## Workflow PREFILL
 
