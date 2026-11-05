@@ -188,6 +188,10 @@ Score neo vào **Targeting** trong `profile.md` (trọng số + must-have + nice
 4. **Mô phỏng ATS (bắt buộc):** `python3 .opencode/skills/vn-it-cv/scripts/ats_check.py cv/<file>.md` — fail (thiếu email/phone/URL, sai thứ tự section, role thiếu ngày, header placeholder). Advisory: `python3 .opencode/skills/vn-it-cv/scripts/jd_coverage.py cv/<file>.md jobs/<job>.md` (ADD/CONTEXT/GAP — chỉ thêm khi có bằng chứng).
 5. Output: `cv/<company>-<role>-<lang>.md` → `python3 .opencode/skills/vn-it-cv/scripts/export_cv.py cv/<file>.md` → `cv/<file>.pdf` (text-based, Chrome headless).
 6. Cập nhật `cv_versions` (hash) trong DB; `status` đổi qua UI/`jc status` — **KHÔNG** ghi lifecycle vào `jobs/*.md`.
+7. **Cover letter** (khi JD/recruiter yêu cầu, hoặc CV có gap cứng): theo `references/cover-letter.md` —
+   khung 4 đoạn + bộ 3 câu screen (expected nett · current nett & position · earliest start). Lưu
+   `cv/cover/cover-<company>-<role>-<lang>.md` (sub-folder riêng, không bị `selfcheck`/`ats_check` coi là CV).
+   ITviec hỏi 3 mục này ngay sau khi nộp → trả lời đủ, đừng bỏ mục nào.
 
 ## Phase 6.5 — Interview Prep (sau khi nộp / khi có lịch)
 
